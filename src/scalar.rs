@@ -117,7 +117,7 @@ pub const S: u32 = 32;
 
 impl fmt::Debug for Scalar {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let be_bytes = self.to_bytes_be();
+        let be_bytes = self.to_be_bytes();
         write!(f, "Scalar(0x")?;
         for &b in be_bytes.iter() {
             write!(f, "{:02x}", b)?;
@@ -136,7 +136,7 @@ impl fmt::Display for Scalar {
 impl Ord for Scalar {
     #[allow(clippy::comparison_chain)]
     fn cmp(&self, other: &Scalar) -> cmp::Ordering {
-        for (a, b) in self.to_bytes_be().iter().zip(other.to_bytes_be().iter()) {
+        for (a, b) in self.to_be_bytes().iter().zip(other.to_be_bytes().iter()) {
             if a > b {
                 return cmp::Ordering::Greater;
             } else if a < b {
@@ -457,7 +457,7 @@ impl PrimeField for Scalar {
     }
     /// Converts a Montgomery form `Scalar` into little-endian non-Montgomery from.
     fn to_repr(&self) -> Self::Repr {
-        self.to_bytes_le()
+        self.to_le_bytes()
     }
 
     fn is_odd(&self) -> Choice {
@@ -530,7 +530,7 @@ impl PrimeFieldBits for Scalar {
 
     #[cfg(not(target_pointer_width = "64"))]
     fn to_le_bits(&self) -> FieldBits<Self::ReprBits> {
-        let bytes = self.to_bytes_le();
+        let bytes = self.to_le_bytes();
         let limbs = [
             u32::from_le_bytes(bytes[0..4].try_into().unwrap()),
             u32::from_le_bytes(bytes[4..8].try_into().unwrap()),
@@ -557,7 +557,7 @@ impl PrimeFieldBits for Scalar {
 
 impl LowerHex for Scalar {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let tmp = self.to_bytes_be();
+        let tmp = self.to_be_bytes();
         for &b in tmp.iter() {
             write!(f, "{:02x}", b)?;
         }
@@ -567,7 +567,7 @@ impl LowerHex for Scalar {
 
 impl UpperHex for Scalar {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let tmp = self.to_bytes_be();
+        let tmp = self.to_be_bytes();
         for &b in tmp.iter() {
             write!(f, "{:02X}", b)?;
         }
@@ -608,7 +608,7 @@ impl Scalar {
     /// Converts an element of `Scalar` into a byte representation in
     /// little-endian byte order.
     #[inline]
-    pub fn to_bytes_le(&self) -> [u8; Self::BYTES] {
+    pub fn to_le_bytes(&self) -> [u8; Self::BYTES] {
         let mut out = [0u64; 4];
         unsafe { blst_uint64_from_fr(out.as_mut_ptr(), &self.0) };
         let mut res = [0u8; Self::BYTES];
@@ -622,8 +622,8 @@ impl Scalar {
 
     /// Converts an element of `Scalar` into a byte representation in
     /// big-endian byte order.
-    pub fn to_bytes_be(&self) -> [u8; Self::BYTES] {
-        let mut bytes = self.to_bytes_le();
+    pub fn to_be_bytes(&self) -> [u8; Self::BYTES] {
+        let mut bytes = self.to_le_bytes();
         bytes.reverse();
         bytes
     }
@@ -642,14 +642,14 @@ impl Scalar {
     }
 
     /// Create a new [`Scalar`] from the provided big endian hex string.
-    pub fn from_hex_be(hex: &str) -> CtOption<Self> {
+    pub fn from_be_hex(hex: &str) -> CtOption<Self> {
         let mut buf = [0u8; Self::BYTES];
         util::decode_hex_into_slice(&mut buf, hex.as_bytes());
         Self::from_bytes_be(&buf)
     }
 
     /// Create a new [`Scalar`] from the provided little endian hex string.
-    pub fn from_hex_le(hex: &str) -> CtOption<Self> {
+    pub fn from_le_hex(hex: &str) -> CtOption<Self> {
         let mut buf = [0u8; Self::BYTES];
         util::decode_hex_into_slice(&mut buf, hex.as_bytes());
         Self::from_bytes_le(&buf)
@@ -687,7 +687,7 @@ impl Scalar {
 
     pub fn num_bits(&self) -> u32 {
         let mut ret = 256;
-        for i in self.to_bytes_be().iter() {
+        for i in self.to_be_bytes().iter() {
             let leading = i.leading_zeros();
             ret -= leading;
             if leading != 8 {
@@ -884,7 +884,7 @@ mod tests {
     #[test]
     fn test_to_bytes() {
         assert_eq!(
-            Scalar::ZERO.to_bytes_le(),
+            Scalar::ZERO.to_le_bytes(),
             [
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0
@@ -892,7 +892,7 @@ mod tests {
         );
 
         assert_eq!(
-            Scalar::ONE.to_bytes_le(),
+            Scalar::ONE.to_le_bytes(),
             [
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0
@@ -900,7 +900,7 @@ mod tests {
         );
 
         assert_eq!(
-            R2.to_bytes_le(),
+            R2.to_le_bytes(),
             [
                 254, 255, 255, 255, 1, 0, 0, 0, 2, 72, 3, 0, 250, 183, 132, 88, 245, 79, 188, 236,
                 239, 79, 140, 153, 111, 5, 197, 172, 89, 177, 36, 24
@@ -908,7 +908,7 @@ mod tests {
         );
 
         assert_eq!(
-            (-&Scalar::ONE).to_bytes_le(),
+            (-&Scalar::ONE).to_le_bytes(),
             [
                 0, 0, 0, 0, 255, 255, 255, 255, 254, 91, 254, 255, 2, 164, 189, 83, 5, 216, 161, 9,
                 8, 216, 57, 51, 72, 125, 157, 41, 83, 167, 237, 115
@@ -1246,7 +1246,7 @@ mod tests {
         let a = Scalar::from(100);
         let mut expected_bytes = [0u8; 32];
         expected_bytes[0] = 100;
-        assert_eq!(a.to_bytes_le(), expected_bytes);
+        assert_eq!(a.to_le_bytes(), expected_bytes);
     }
 
     #[test]
@@ -2037,12 +2037,12 @@ mod tests {
     fn test_hex() {
         let s1 = R2;
         let hex = format!("{:x}", s1);
-        let s2 = Scalar::from_hex_be(&hex);
+        let s2 = Scalar::from_be_hex(&hex);
         assert_eq!(s2.is_some().unwrap_u8(), 1u8);
         let s2 = s2.unwrap();
         assert_eq!(s1, s2);
-        let hex = hex::encode(s1.to_bytes_le());
-        let s2 = Scalar::from_hex_le(&hex);
+        let hex = hex::encode(s1.to_le_bytes());
+        let s2 = Scalar::from_le_hex(&hex);
         assert_eq!(s2.is_some().unwrap_u8(), 1u8);
         let s2 = s2.unwrap();
         assert_eq!(s1, s2);
@@ -2059,7 +2059,7 @@ mod tests {
             184, 141, 14, 25, 196, 12, 5, 65, 222, 229, 103, 132, 86, 28, 224, 249, 100, 61, 100,
             238, 234, 250, 153, 140, 126, 148, 80, 19, 66, 92, 178, 14,
         ];
-        let actual = Scalar::from_okm(&okm).to_bytes_le();
+        let actual = Scalar::from_okm(&okm).to_le_bytes();
         assert_eq!(actual, expected)
     }
 

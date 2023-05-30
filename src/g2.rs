@@ -665,7 +665,7 @@ impl G2Projective {
         // Sclar is 255 bits wide.
         const NBITS: usize = 255;
 
-        unsafe { blst_p2_mult(&mut out, &self.0, scalar.to_bytes_le().as_ptr(), NBITS) };
+        unsafe { blst_p2_mult(&mut out, &self.0, scalar.to_le_bytes().as_ptr(), NBITS) };
 
         G2Projective(out)
     }
@@ -726,7 +726,7 @@ impl G2Projective {
         let points = p2_affines::from(points);
 
         let mut scalar_bytes: Vec<u8> = Vec::with_capacity(n * 32);
-        for a in scalars.iter().map(|s| s.to_bytes_le()) {
+        for a in scalars.iter().map(|s| s.to_le_bytes()) {
             scalar_bytes.extend_from_slice(&a);
         }
 

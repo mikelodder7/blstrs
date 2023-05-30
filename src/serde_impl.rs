@@ -144,7 +144,7 @@ impl Serialize for Scalar {
         if s.is_human_readable() {
             s.serialize_str(&format!("{:x}", self))
         } else {
-            let bytes = self.to_bytes_be();
+            let bytes = self.to_be_bytes();
             let mut tup = s.serialize_tuple(bytes.len())?;
             for byte in bytes.as_ref() {
                 tup.serialize_element(byte)?;
@@ -530,14 +530,14 @@ mod tests {
             0xbc, 0xe5,
         ]);
         let s1 = Scalar::random(&mut rng);
-        let bytes = s1.to_bytes_be();
+        let bytes = s1.to_be_bytes();
         let s2 = bls12_381_plus::Scalar::from_be_bytes(&bytes).unwrap();
-        assert_eq!(s1.to_bytes_le(), s2.to_le_bytes());
+        assert_eq!(s1.to_le_bytes(), s2.to_le_bytes());
 
         assert_eq!(format!("{:x}", s1), format!("{:x}", s2));
         let ss1 = serde_json::to_string(&s1).unwrap();
         let s2 = serde_json::from_str::<bls12_381_plus::Scalar>(&ss1).unwrap();
-        assert_eq!(s1.to_bytes_le(), s2.to_le_bytes());
+        assert_eq!(s1.to_le_bytes(), s2.to_le_bytes());
 
         let p1 = G1Projective::random(&mut rng);
         let s1 = serde_json::to_string(&p1).unwrap();

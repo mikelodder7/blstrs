@@ -759,6 +759,9 @@ impl G1Projective {
         } else {
             scalars.len()
         };
+        if n == 0 {
+            return Self::identity();
+        }
         let points =
             unsafe { std::slice::from_raw_parts(points.as_ptr() as *const blst_p1, points.len()) };
 

@@ -751,31 +751,7 @@ impl G1Projective {
         res
     }
 
-    /// Perform a multi-exponentiation, aka "multi-scalar-multiplication" (MSM) using `blst`'s implementation of Pippenger's algorithm.
-    /// Note: `scalars` is cloned in this method.
-    pub fn multi_exp(points: &[Self], scalars: &[Scalar]) -> Self {
-        let n = if points.len() < scalars.len() {
-            points.len()
-        } else {
-            scalars.len()
-        };
-        if n == 0 {
-            return Self::identity();
-        }
-        let points =
-            unsafe { std::slice::from_raw_parts(points.as_ptr() as *const blst_p1, points.len()) };
-
-        let points = p1_affines::from(points);
-
-        let mut scalar_bytes: Vec<u8> = Vec::with_capacity(n * 32);
-        for a in scalars.iter().map(|s| s.to_le_bytes()) {
-            scalar_bytes.extend_from_slice(&a);
-        }
-
-        let res = points.mult(scalar_bytes.as_slice(), 255);
-
-        G1Projective(res)
-    }
+    impl_pippenger_sum_of_products!();
 }
 
 impl Group for G1Projective {
@@ -1545,7 +1521,7 @@ mod tests {
             naive += points[i] * scalars[i];
         }
 
-        let pippenger = G1Projective::multi_exp(points.as_slice(), scalars.as_slice());
+        let pippenger = G1Projective::sum_of_products(points.as_slice(), scalars.as_slice());
 
         assert_eq!(naive, pippenger);
     }

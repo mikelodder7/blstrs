@@ -643,6 +643,13 @@ impl Scalar {
         CtOption::new(Scalar(out), is_some)
     }
 
+    /// Converts from a scalar to an integer represented in little endian
+    pub(crate) fn to_raw(&self) -> [u64; 4] {
+        let mut out = [0u64; 4];
+        unsafe { blst_uint64_from_fr(out.as_mut_ptr(), &self.0) };
+        out
+    }
+
     /// Create a new [`Scalar`] from the provided big endian hex string.
     pub fn from_be_hex(hex: &str) -> CtOption<Self> {
         let mut buf = [0u8; Self::BYTES];

@@ -309,7 +309,7 @@ impl Serialize for Fp6 {
 impl<'de> Deserialize<'de> for Fp {
     fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         let deser = <[u64; 6]>::deserialize(d)?;
-        match Fp::from_u64s_le(&deser).into() {
+        match Fp::from_raw(&deser).into() {
             Some(fp) => Ok(fp),
             None => Err(D::Error::custom(ERR_CODE)),
         }

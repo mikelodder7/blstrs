@@ -1,14 +1,15 @@
 # `blstrs`
 
 > Implementation of BLS12-381 pairing-friendly elliptic curve construction, using the [blst](https://github.com/supranational/blst) library as backend.
+> Provides compatibility with `bls12_381_plus` except for hash to curve. `blst` does not provide a generic hash to curve implementation and only supports SHA-256.
 
-## Pronounciation
+## Pronunciation
 
 Most important section, the name is pronounced `blasters`.
 
 ## Supported Platforms
 
-Due to the assembly based nature of the implementation in `blst`, currently only the following architectures are supported
+Due to the assembly based nature of the implementation in `blst_plus`, currently only the following architectures are supported
 
 - `x86_64`,
 - `aarch64`.
@@ -16,7 +17,6 @@ Due to the assembly based nature of the implementation in `blst`, currently only
 ## BLST Portability
 
 To enable portable features when building the blst dependency, use the 'portable' feature: `--features portable`.
-
 
 ## Benchmarking
 

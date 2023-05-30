@@ -371,7 +371,7 @@ mod tests {
         assert_eq!(a_sq, Fp2::new(-Fp::ONE, Fp::ZERO)); // -1
 
         let a = Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x9c2c6309bbf8b598,
                 0x4eef5c946536f602,
                 0x90e34aab6fb6a6bd,
@@ -380,7 +380,7 @@ mod tests {
                 0x7080c5fa1d8e042,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x38f473b3c870a4ab,
                 0x6ad3291177c8c7e5,
                 0xdac5a4c911a4353e,
@@ -394,7 +394,7 @@ mod tests {
         assert_eq!(
             a_sq,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xf262c28c538bcf68,
                     0xb9f2a66eae1073ba,
                     0xdc46ab8fad67ae0,
@@ -403,7 +403,7 @@ mod tests {
                     0x7eac81369c43361
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xc1579cf58e980cf8,
                     0xa23eb7e12dd54d98,
                     0xe75138bce4cec7aa,
@@ -419,7 +419,7 @@ mod tests {
     #[test]
     fn test_fp2_mul() {
         let mut a = Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x85c9f989e1461f03,
                 0xa2e33c333449a1d6,
                 0x41e461154a7354a3,
@@ -428,7 +428,7 @@ mod tests {
                 0x51d3f9253e2516f,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0xa7348a8b511aedcf,
                 0x143c215d8176b319,
                 0x4cc48081c09b8903,
@@ -439,7 +439,7 @@ mod tests {
             .unwrap(),
         );
         a *= &Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0xe21f9169805f537e,
                 0xfc87e62e179c285d,
                 0x27ece175be07a531,
@@ -448,7 +448,7 @@ mod tests {
                 0x2c93a72eb8af83e,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x4b1c3f936d8992d4,
                 0x1d2a72916dba4c8a,
                 0x8871c508658d1e5f,
@@ -461,7 +461,7 @@ mod tests {
         assert_eq!(
             a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x95b5127e6360c7e4,
                     0xde29c31a19a6937e,
                     0xf61a96dacf5a39bc,
@@ -470,7 +470,7 @@ mod tests {
                     0x1751afbe166e5399
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x84af0e1bd630117a,
                     0x6c63cd4da2c2aa7,
                     0x5ba6e5430e883d40,
@@ -488,7 +488,7 @@ mod tests {
         assert_eq!(Fp2::ZERO.invert().is_none().unwrap_u8(), 1);
 
         let a = Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x85c9f989e1461f03,
                 0xa2e33c333449a1d6,
                 0x41e461154a7354a3,
@@ -497,7 +497,7 @@ mod tests {
                 0x51d3f9253e2516f,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0xa7348a8b511aedcf,
                 0x143c215d8176b319,
                 0x4cc48081c09b8903,
@@ -511,7 +511,7 @@ mod tests {
         assert_eq!(
             a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x70300f9bcb9e594,
                     0xe5ecda5fdafddbb2,
                     0x64bef617d2915a8f,
@@ -520,7 +520,7 @@ mod tests {
                     0x1351ef01941b70c4
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x8c39fd76a8312cb4,
                     0x15d7b6b95defbff0,
                     0x947143f89faedee9,
@@ -536,7 +536,7 @@ mod tests {
     #[test]
     fn test_fp2_addition() {
         let mut a = Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x2d0078036923ffc7,
                 0x11e59ea221a3b6d2,
                 0x8b1a52e0a90f59ed,
@@ -545,7 +545,7 @@ mod tests {
                 0xf8d295b2ded9dc,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x977df6efcdaee0db,
                 0x946ae52d684fa7ed,
                 0xbe203411c66fb3a5,
@@ -556,7 +556,7 @@ mod tests {
             .unwrap(),
         );
         a += &Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x619a02d78dc70ef2,
                 0xb93adfc9119e33e8,
                 0x4bf0b99a9f0dca12,
@@ -565,7 +565,7 @@ mod tests {
                 0x13ce433fa26027f5,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x66323bf80b58b9b9,
                 0xa1379b6facf6e596,
                 0x402aef1fb797e32f,
@@ -578,7 +578,7 @@ mod tests {
         assert_eq!(
             a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x8e9a7adaf6eb0eb9,
                     0xcb207e6b3341eaba,
                     0xd70b0c7b481d23ff,
@@ -587,7 +587,7 @@ mod tests {
                     0x14c715d5553f01d2
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xfdb032e7d9079a94,
                     0x35a2809d15468d83,
                     0xfe4b23317e0796d5,
@@ -603,7 +603,7 @@ mod tests {
     #[test]
     fn test_fp2_subtraction() {
         let mut a = Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x2d0078036923ffc7,
                 0x11e59ea221a3b6d2,
                 0x8b1a52e0a90f59ed,
@@ -612,7 +612,7 @@ mod tests {
                 0xf8d295b2ded9dc,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x977df6efcdaee0db,
                 0x946ae52d684fa7ed,
                 0xbe203411c66fb3a5,
@@ -623,7 +623,7 @@ mod tests {
             .unwrap(),
         );
         a -= &Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x619a02d78dc70ef2,
                 0xb93adfc9119e33e8,
                 0x4bf0b99a9f0dca12,
@@ -632,7 +632,7 @@ mod tests {
                 0x13ce433fa26027f5,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x66323bf80b58b9b9,
                 0xa1379b6facf6e596,
                 0x402aef1fb797e32f,
@@ -645,7 +645,7 @@ mod tests {
         assert_eq!(
             a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x8565752bdb5c9b80,
                     0x7756bed7c15982e9,
                     0xa65a6be700b285fe,
@@ -654,7 +654,7 @@ mod tests {
                     0x72ba14049fe9881
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xeb4abaf7c255d1cd,
                     0x11df49bc6cacc256,
                     0xe52617930588c69a,
@@ -670,7 +670,7 @@ mod tests {
     #[test]
     fn test_fp2_negaton() {
         let a = Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x2d0078036923ffc7,
                 0x11e59ea221a3b6d2,
                 0x8b1a52e0a90f59ed,
@@ -679,7 +679,7 @@ mod tests {
                 0xf8d295b2ded9dc,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x977df6efcdaee0db,
                 0x946ae52d684fa7ed,
                 0xbe203411c66fb3a5,
@@ -692,7 +692,7 @@ mod tests {
         assert_eq!(
             -a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x8cfe87fc96dbaae4,
                     0xcc6615c8fb0492d,
                     0xdc167fc04da19c37,
@@ -701,7 +701,7 @@ mod tests {
                     0x19083f5486a10cbd
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x228109103250c9d0,
                     0x8a411ad149045812,
                     0xa9109e8f3041427e,
@@ -717,7 +717,7 @@ mod tests {
     #[test]
     fn test_fp2_doubling() {
         let a = Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x2d0078036923ffc7,
                 0x11e59ea221a3b6d2,
                 0x8b1a52e0a90f59ed,
@@ -726,7 +726,7 @@ mod tests {
                 0xf8d295b2ded9dc,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x977df6efcdaee0db,
                 0x946ae52d684fa7ed,
                 0xbe203411c66fb3a5,
@@ -739,7 +739,7 @@ mod tests {
         assert_eq!(
             a.double(),
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x5a00f006d247ff8e,
                     0x23cb3d4443476da4,
                     0x1634a5c1521eb3da,
@@ -748,7 +748,7 @@ mod tests {
                     0x1f1a52b65bdb3b9
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x2efbeddf9b5dc1b6,
                     0x28d5ca5ad09f4fdb,
                     0x7c4068238cdf674b,
@@ -764,7 +764,7 @@ mod tests {
     #[test]
     fn test_fp2_frobenius_map() {
         let mut a = Fp2::new(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x2d0078036923ffc7,
                 0x11e59ea221a3b6d2,
                 0x8b1a52e0a90f59ed,
@@ -773,7 +773,7 @@ mod tests {
                 0xf8d295b2ded9dc,
             ])
             .unwrap(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x977df6efcdaee0db,
                 0x946ae52d684fa7ed,
                 0xbe203411c66fb3a5,
@@ -787,7 +787,7 @@ mod tests {
         assert_eq!(
             a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x2d0078036923ffc7,
                     0x11e59ea221a3b6d2,
                     0x8b1a52e0a90f59ed,
@@ -796,7 +796,7 @@ mod tests {
                     0xf8d295b2ded9dc
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x977df6efcdaee0db,
                     0x946ae52d684fa7ed,
                     0xbe203411c66fb3a5,
@@ -811,7 +811,7 @@ mod tests {
         assert_eq!(
             a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x2d0078036923ffc7,
                     0x11e59ea221a3b6d2,
                     0x8b1a52e0a90f59ed,
@@ -820,7 +820,7 @@ mod tests {
                     0xf8d295b2ded9dc
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x228109103250c9d0,
                     0x8a411ad149045812,
                     0xa9109e8f3041427e,
@@ -835,7 +835,7 @@ mod tests {
         assert_eq!(
             a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x2d0078036923ffc7,
                     0x11e59ea221a3b6d2,
                     0x8b1a52e0a90f59ed,
@@ -844,7 +844,7 @@ mod tests {
                     0xf8d295b2ded9dc
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x977df6efcdaee0db,
                     0x946ae52d684fa7ed,
                     0xbe203411c66fb3a5,
@@ -859,7 +859,7 @@ mod tests {
         assert_eq!(
             a,
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x2d0078036923ffc7,
                     0x11e59ea221a3b6d2,
                     0x8b1a52e0a90f59ed,
@@ -868,7 +868,7 @@ mod tests {
                     0xf8d295b2ded9dc
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x977df6efcdaee0db,
                     0x946ae52d684fa7ed,
                     0xbe203411c66fb3a5,
@@ -967,7 +967,7 @@ mod tests {
     fn test_fp2_sqrt() {
         assert_eq!(
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x476b4c309720e227,
                     0x34c2d04faffdab6,
                     0xa57e6fc1bab51fd9,
@@ -976,7 +976,7 @@ mod tests {
                     0x7ca7da1f13606ac
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xfa8de88b7516d2c3,
                     0x371a75ed14f41629,
                     0x4cec2dca577a3eb6,
@@ -989,7 +989,7 @@ mod tests {
             .sqrt()
             .unwrap(),
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x40b299b2704258c5,
                     0x6ef7de92e8c68b63,
                     0x6d2ddbe552203e82,
@@ -998,7 +998,7 @@ mod tests {
                     0x10f6963bbad2ebc5
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xc099534fc209e752,
                     0x7670594665676447,
                     0x28a20faed211efe7,
@@ -1013,7 +1013,7 @@ mod tests {
 
         assert_eq!(
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xb9f78429d1517a6b,
                     0x1eabfffeb153ffff,
                     0x6730d2a0f6b0f624,
@@ -1028,7 +1028,7 @@ mod tests {
             .unwrap(),
             Fp2::new(
                 Fp::ZERO,
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xb9fefffffd4357a3,
                     0x1eabfffeb153ffff,
                     0x6730d2a0f6b0f624,

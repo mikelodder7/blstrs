@@ -515,7 +515,7 @@ impl Field for Fp {
             // Mask away the unused most-significant bits.
             raw[5] &= 0xffffffffffffffff >> REPR_SHAVE_BITS;
 
-            if let Some(fp) = Fp::from_u64s_le(&raw).into() {
+            if let Some(fp) = Fp::from_raw(&raw).into() {
                 return fp;
             }
         }
@@ -629,7 +629,7 @@ impl Fp {
     }
 
     // `u64s` represent a little-endian non-Montgomery form integer mod p.
-    pub fn from_u64s_le(bytes: &[u64; 6]) -> CtOption<Self> {
+    pub fn from_raw(bytes: &[u64; 6]) -> CtOption<Self> {
         let is_some = Choice::from(is_valid_u64(bytes) as u8);
         let mut out = blst_fp::default();
         unsafe { blst_fp_from_uint64(&mut out, bytes.as_ptr()) };
@@ -719,7 +719,7 @@ mod tests {
         assert!(bool::from(Fp::from(0).is_zero()));
         assert!(!bool::from(Fp::from(1).is_zero()));
         assert!(!bool::from(
-            Fp::from_u64s_le(&[0, 0, 0, 0, 1, 0]).unwrap().is_zero()
+            Fp::from_raw(&[0, 0, 0, 0, 1, 0]).unwrap().is_zero()
         ));
     }
 
@@ -1097,7 +1097,7 @@ mod tests {
         assert!(!bool::from(a.is_zero()));
         assert_eq!(
             a.square(),
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0x1cfb28fe7dfbbb86,
                 0x24cbe1731577a59,
                 0xcce1d4edc120e66e,
@@ -1263,7 +1263,7 @@ mod tests {
     fn test_fp_from_into_repr() {
         // q + 1 should not be in the field
         assert!(bool::from(
-            Fp::from_u64s_le(&[
+            Fp::from_raw(&[
                 0xb9feffffffffaaac,
                 0x1eabfffeb153ffff,
                 0x6730d2a0f6b0f624,
@@ -1275,7 +1275,7 @@ mod tests {
         ));
 
         // Multiply some arbitrary representations to see if the result is as expected.
-        let mut a = Fp::from_u64s_le(&[
+        let mut a = Fp::from_raw(&[
             0x4a49dad4ff6cde2d,
             0xac62a82a8f51cd50,
             0x2b1f41ab9f36d640,
@@ -1284,7 +1284,7 @@ mod tests {
             0x6c80918a365ef78,
         ])
         .unwrap();
-        let b = Fp::from_u64s_le(&[
+        let b = Fp::from_raw(&[
             0xbba57917c32f0cf0,
             0xe7f878cf87f05e5d,
             0x9498b4292fd27459,
@@ -1293,7 +1293,7 @@ mod tests {
             0xb13955f5ac7f6a3,
         ])
         .unwrap();
-        let c = Fp::from_u64s_le(&[
+        let c = Fp::from_raw(&[
             0xf5f70713b717914c,
             0x355ea5ac64cbbab1,
             0xce60dd43417ec960,
@@ -1327,7 +1327,7 @@ mod tests {
     #[test]
     fn test_fp_display() {
         assert_eq!(
-            format!("{}", Fp::from_u64s_le(&[
+            format!("{}", Fp::from_raw(&[
                 0xa956babf9301ea24,
                 0x39a8f184f3535c7b,
                 0xb38d35b3f6779585,
@@ -1340,7 +1340,7 @@ mod tests {
         );
 
         assert_eq!(
-            format!("{}", Fp::from_u64s_le(&[
+            format!("{}", Fp::from_raw(&[
                0xe28e79396ac2bbf8,
                0x413f6f7f06ea87eb,
                0xa4b62af4a792a689,

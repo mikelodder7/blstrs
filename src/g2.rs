@@ -1026,7 +1026,7 @@ mod tests {
         {
             let p = G2Affine::from_raw_unchecked(
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xa757072d9fa35ba9,
                         0xae3fb2fb418f6e8a,
                         0xc1598ec46faa0c7c,
@@ -1035,7 +1035,7 @@ mod tests {
                         0x10b8c03d64db4d0c,
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xd30e70fe2f029778,
                         0xda30772df0f5212e,
                         0x5b47a9ff9a233a50,
@@ -1046,7 +1046,7 @@ mod tests {
                     .unwrap(),
                 ),
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xfe0812043de54dca,
                         0xe455171a3d47a646,
                         0xa493f36bc20be98a,
@@ -1055,7 +1055,7 @@ mod tests {
                         0x40a00545bb3c1e,
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x4709802348e79377,
                         0xb5ac4dc9204bcfbd,
                         0xda361c97d02f42b2,
@@ -1074,7 +1074,7 @@ mod tests {
         {
             let p = G2Affine::from_raw_unchecked(
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xf4fdfe95a705f917,
                         0xc2914df688233238,
                         0x37c6b12cca35a34b,
@@ -1083,7 +1083,7 @@ mod tests {
                         0x6993ec01b8934ed,
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xb94e92d5f874e26,
                         0x44516408bc115d95,
                         0xe93946b290caa591,
@@ -1094,7 +1094,7 @@ mod tests {
                     .unwrap(),
                 ),
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xbf00334c79701d97,
                         0x4fe714f9ff204f9a,
                         0xab70b28002f3d825,
@@ -1103,7 +1103,7 @@ mod tests {
                         0xb649051bbc1164d,
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x9225814253d7df75,
                         0xc196c2513477f887,
                         0xe05e2fbd15a804e0,
@@ -1124,7 +1124,7 @@ mod tests {
         {
             let p = G2Affine::from_raw_unchecked(
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x262cea73ea1906c,
                         0x2f08540770fabd6,
                         0x4ceb92d0a76057be,
@@ -1133,7 +1133,7 @@ mod tests {
                         0x17762a3b9108c4a7,
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x26f461e944bbd3d1,
                         0x298f3189a9cf6ed6,
                         0x74328ad8bc2aa150,
@@ -1144,7 +1144,7 @@ mod tests {
                     .unwrap(),
                 ),
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x91fb0b225ecf103b,
                         0x55d42edc1dc46ba0,
                         0x43939b11997b1943,
@@ -1153,7 +1153,7 @@ mod tests {
                         0x1660f93434588f8d,
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xaaed3985b6dcb9c7,
                         0xc1e985d6d898d9f4,
                         0x618bd2ac3271ac42,
@@ -1174,7 +1174,7 @@ mod tests {
     fn test_g2_addition_correctness() {
         let mut p = G2Projective::from_raw_unchecked(
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x6c994cc1e303094e,
                     0xf034642d2c9e85bd,
                     0x275094f1352123a9,
@@ -1183,7 +1183,7 @@ mod tests {
                     0x100b2fe5bffe030b,
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x7a33555977ec608,
                     0xe23039d1fe9c0881,
                     0x19ce4678aed4fcb5,
@@ -1194,7 +1194,7 @@ mod tests {
                 .unwrap(),
             ),
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xe073119472e1eb62,
                     0x44fb3391fe3c9c30,
                     0xaa9b066d74694006,
@@ -1203,7 +1203,7 @@ mod tests {
                     0x191b2432407cbb7f,
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xf68ae82fe97662f5,
                     0xe986057068b50b7d,
                     0x96c30f0411590b48,
@@ -1218,7 +1218,7 @@ mod tests {
 
         p.add_assign(&G2Projective::from_raw_unchecked(
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xa8c763d25910bdd3,
                     0x408777b30ca3add4,
                     0x6115fcc12e2769e,
@@ -1227,7 +1227,7 @@ mod tests {
                     0xa33d27add5e7e82,
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x93b1ebcd54870dfe,
                     0xf1578300e1342e11,
                     0x8270dca3a912407b,
@@ -1238,7 +1238,7 @@ mod tests {
                 .unwrap(),
             ),
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xf5d2c28857229c3f,
                     0x8c1574228757ca23,
                     0xe8d8102175f5dc19,
@@ -1247,7 +1247,7 @@ mod tests {
                     0x16576ccd3dd0a4e8,
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x4da9b6f6a96d1dd2,
                     0x9657f7da77f1650e,
                     0xbc150712f9ffe6da,
@@ -1266,7 +1266,7 @@ mod tests {
             p,
             G2Affine::from_raw_unchecked(
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xcde7ee8a3f2ac8af,
                         0xfc642eb35975b069,
                         0xa7de72b7dd0e64b7,
@@ -1275,7 +1275,7 @@ mod tests {
                         0xd7c20456617e89
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0xd1a50b8572cbd2b8,
                         0x238f0ac6119d07df,
                         0x4dbe924fe5fd6ac2,
@@ -1286,7 +1286,7 @@ mod tests {
                     .unwrap(),
                 ),
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x9e709e78a8eaa4c9,
                         0xd30921c93ec342f4,
                         0x6d1ef332486f5e34,
@@ -1295,7 +1295,7 @@ mod tests {
                         0x4cb84741f3cafe8
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x242af0dc3640e1a4,
                         0xe90a73ad65c66919,
                         0x2bd7ca7f4346f9ec,
@@ -1314,7 +1314,7 @@ mod tests {
     fn test_g2_doubling_correctness() {
         let mut p = G2Projective::from_raw_unchecked(
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x6c994cc1e303094e,
                     0xf034642d2c9e85bd,
                     0x275094f1352123a9,
@@ -1323,7 +1323,7 @@ mod tests {
                     0x100b2fe5bffe030b,
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0x7a33555977ec608,
                     0xe23039d1fe9c0881,
                     0x19ce4678aed4fcb5,
@@ -1334,7 +1334,7 @@ mod tests {
                 .unwrap(),
             ),
             Fp2::new(
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xe073119472e1eb62,
                     0x44fb3391fe3c9c30,
                     0xaa9b066d74694006,
@@ -1343,7 +1343,7 @@ mod tests {
                     0x191b2432407cbb7f,
                 ])
                 .unwrap(),
-                Fp::from_u64s_le(&[
+                Fp::from_raw(&[
                     0xf68ae82fe97662f5,
                     0xe986057068b50b7d,
                     0x96c30f0411590b48,
@@ -1364,7 +1364,7 @@ mod tests {
             p,
             G2Affine::from_raw_unchecked(
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x91ccb1292727c404,
                         0x91a6cb182438fad7,
                         0x116aee59434de902,
@@ -1373,7 +1373,7 @@ mod tests {
                         0x18bab73760fd8024
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x4e7c5e0a2ae5b99e,
                         0x96e582a27f028961,
                         0xc74d1cf4ef2d5926,
@@ -1384,7 +1384,7 @@ mod tests {
                     .unwrap(),
                 ),
                 Fp2::new(
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x954d4466ab13e58,
                         0x3ee42eec614cf890,
                         0x853bb1d28877577e,
@@ -1393,7 +1393,7 @@ mod tests {
                         0x81a53fe531d64ef
                     ])
                     .unwrap(),
-                    Fp::from_u64s_le(&[
+                    Fp::from_raw(&[
                         0x4c5d607666239b34,
                         0xeddb5f48304d14b3,
                         0x337167ee6e8e3cb6,

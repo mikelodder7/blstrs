@@ -12,7 +12,7 @@ use core::{
 
 use crate::util;
 use blst::*;
-use byte_slice_cast::AsByteSlice;
+// use byte_slice_cast::AsByteSlice;
 use ff::{Field, FieldBits, PrimeField, PrimeFieldBits};
 use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -361,7 +361,7 @@ impl Field for Scalar {
             // Mask away the unused most-significant bits.
             raw[3] &= 0xffffffffffffffff >> REPR_SHAVE_BITS;
 
-            if let Some(scalar) = Scalar::from_u64s_le(&raw).into() {
+            if let Some(scalar) = Scalar::from_raw(&raw).into() {
                 return scalar;
             }
         }
@@ -611,7 +611,13 @@ impl Scalar {
     pub fn to_bytes_le(&self) -> [u8; Self::BYTES] {
         let mut out = [0u64; 4];
         unsafe { blst_uint64_from_fr(out.as_mut_ptr(), &self.0) };
-        out.as_byte_slice().try_into().unwrap()
+        let mut res = [0u8; Self::BYTES];
+        res[0..8].copy_from_slice(&out[0].to_le_bytes());
+        res[8..16].copy_from_slice(&out[1].to_le_bytes());
+        res[16..24].copy_from_slice(&out[2].to_le_bytes());
+        res[24..32].copy_from_slice(&out[3].to_le_bytes());
+
+        res
     }
 
     /// Converts an element of `Scalar` into a byte representation in
@@ -622,8 +628,9 @@ impl Scalar {
         bytes
     }
 
-    // `u64s` represent a little-endian non-Montgomery form integer mod p.
-    pub fn from_u64s_le(bytes: &[u64; 4]) -> CtOption<Self> {
+    /// Converts from an integer represented in little endian
+    /// into its (congruent) `Scalar` representation.
+    pub fn from_raw(bytes: &[u64; 4]) -> CtOption<Self> {
         let mut raw = blst_scalar::default();
         let mut out = blst_fr::default();
 
@@ -1185,7 +1192,7 @@ mod tests {
 
     #[test]
     fn test_double() {
-        let a = Scalar::from_u64s_le(&[
+        let a = Scalar::from_raw(&[
             0x1fff3231233ffffd,
             0x4884b7fa00034802,
             0x998c4fefecbc4ff3,
@@ -1209,28 +1216,28 @@ mod tests {
         }
 
         assert_equality(
-            Scalar::from_u64s_le(&[9999, 9999, 9999, 9999]).unwrap(),
-            Scalar::from_u64s_le(&[9999, 9999, 9999, 9999]).unwrap(),
+            Scalar::from_raw(&[9999, 9999, 9999, 9999]).unwrap(),
+            Scalar::from_raw(&[9999, 9999, 9999, 9999]).unwrap(),
         );
         assert_equality(
-            Scalar::from_u64s_le(&[9999, 9998, 9999, 9999]).unwrap(),
-            Scalar::from_u64s_le(&[9999, 9998, 9999, 9999]).unwrap(),
+            Scalar::from_raw(&[9999, 9998, 9999, 9999]).unwrap(),
+            Scalar::from_raw(&[9999, 9998, 9999, 9999]).unwrap(),
         );
         assert_equality(
-            Scalar::from_u64s_le(&[9999, 9999, 9999, 9997]).unwrap(),
-            Scalar::from_u64s_le(&[9999, 9999, 9999, 9997]).unwrap(),
+            Scalar::from_raw(&[9999, 9999, 9999, 9997]).unwrap(),
+            Scalar::from_raw(&[9999, 9999, 9999, 9997]).unwrap(),
         );
         assert_lt(
-            Scalar::from_u64s_le(&[9999, 9997, 9999, 9998]).unwrap(),
-            Scalar::from_u64s_le(&[9999, 9997, 9999, 9999]).unwrap(),
+            Scalar::from_raw(&[9999, 9997, 9999, 9998]).unwrap(),
+            Scalar::from_raw(&[9999, 9997, 9999, 9999]).unwrap(),
         );
         assert_lt(
-            Scalar::from_u64s_le(&[9999, 9997, 9998, 9999]).unwrap(),
-            Scalar::from_u64s_le(&[9999, 9997, 9999, 9999]).unwrap(),
+            Scalar::from_raw(&[9999, 9997, 9998, 9999]).unwrap(),
+            Scalar::from_raw(&[9999, 9997, 9999, 9999]).unwrap(),
         );
         assert_lt(
-            Scalar::from_u64s_le(&[9, 9999, 9999, 9997]).unwrap(),
-            Scalar::from_u64s_le(&[9999, 9999, 9999, 9997]).unwrap(),
+            Scalar::from_raw(&[9, 9999, 9999, 9997]).unwrap(),
+            Scalar::from_raw(&[9999, 9999, 9999, 9997]).unwrap(),
         );
     }
 
@@ -1255,7 +1262,7 @@ mod tests {
         assert!(bool::from(Scalar::from(0).is_zero()));
         assert!(!bool::from(Scalar::from(1).is_zero()));
         assert!(!bool::from(
-            Scalar::from_u64s_le(&[0, 0, 1, 0]).unwrap().is_zero()
+            Scalar::from_raw(&[0, 0, 1, 0]).unwrap().is_zero()
         ));
     }
 
@@ -1279,7 +1286,7 @@ mod tests {
         assert_eq!(Scalar::ZERO.sqrt().unwrap(), Scalar::ZERO);
         assert_eq!(Scalar::ONE.sqrt().unwrap(), Scalar::ONE);
 
-        let e = Scalar::from_u64s_le(&[
+        let e = Scalar::from_raw(&[
             0x0dbc5349cd5664da,
             0x8ac5b6296e3ae29d,
             0x127cb819feceaa3b,
@@ -1288,7 +1295,7 @@ mod tests {
         .unwrap();
         assert!(bool::from(e.is_quad_res()));
 
-        let e = Scalar::from_u64s_le(&[
+        let e = Scalar::from_raw(&[
             0x96341aefd047c045,
             0x9b5f4254500a4d65,
             0x1ee08223b68ac240,
@@ -1625,7 +1632,7 @@ mod tests {
         // assert!(a.is_valid());
         assert_eq!(
             a.square(),
-            Scalar::from_u64s_le(&[
+            Scalar::from_raw(&[
                 0xc0d698e7bde077b8,
                 0xb79a310579e76ec2,
                 0xac1da8d0a9af4e5f,
@@ -1784,7 +1791,7 @@ mod tests {
     fn test_scalar_from_into_repr() {
         // r + 1 should not be in the field
         assert!(bool::from(
-            Scalar::from_u64s_le(&[
+            Scalar::from_raw(&[
                 0xffffffff00000002,
                 0x53bda402fffe5bfe,
                 0x3339d80809a1d805,
@@ -1798,21 +1805,21 @@ mod tests {
         assert!(Scalar::from_repr_vartime(Scalar::char()).is_none());
 
         // Multiply some arbitrary representations to see if the result is as expected.
-        let mut a = Scalar::from_u64s_le(&[
+        let mut a = Scalar::from_raw(&[
             0x25ebe3a3ad3c0c6a,
             0x6990e39d092e817c,
             0x941f900d42f5658e,
             0x44f8a103b38a71e0,
         ])
         .unwrap();
-        let b = Scalar::from_u64s_le(&[
+        let b = Scalar::from_raw(&[
             0x264e9454885e2475,
             0x46f7746bb0308370,
             0x4683ef5347411f9,
             0x58838d7f208d4492,
         ])
         .unwrap();
-        let c = Scalar::from_u64s_le(&[
+        let c = Scalar::from_raw(&[
             0x48a09ab93cfc740d,
             0x3a6600fbfc7a671,
             0x838567017501d767,
@@ -1848,7 +1855,7 @@ mod tests {
         assert_eq!(
             format!(
                 "{}",
-                Scalar::from_u64s_le(&[
+                Scalar::from_raw(&[
                     0xc3cae746a3b5ecc7,
                     0x185ec8eb3f5b5aee,
                     0x684499ffe4b9dd99,
@@ -1862,7 +1869,7 @@ mod tests {
         assert_eq!(
             format!(
                 "{}",
-                Scalar::from_u64s_le(&[
+                Scalar::from_raw(&[
                     0x44c71298ff198106,
                     0xb0ad10817df79b6a,
                     0xd034a80a2b74132b,

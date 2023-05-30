@@ -1,4 +1,4 @@
-use crate::{fp12::Fp12, G1Affine, G2Affine, Gt};
+use crate::{Bls12, fp12::Fp12, G1Affine, G2Affine, G2Prepared, Gt};
 use core::ops::{Add, AddAssign};
 use ff::Field;
 use subtle::{Choice, ConditionallySelectable};
@@ -200,4 +200,13 @@ impl<'b> AddAssign<&'b MillerLoopResult> for MillerLoopResult {
     fn add_assign(&mut self, rhs: &'b MillerLoopResult) {
         *self = &*self + rhs;
     }
+}
+
+#[cfg_attr(docsrs, doc(cfg(all(feature = "pairings"))))]
+/// Computes $$\sum_{i=1}^n \textbf{ML}(a_i, b_i)$$ given a series of terms
+/// $$(a_1, b_1), (a_2, b_2), ..., (a_n, b_n).$$
+pub fn multi_miller_loop(terms: &[(&G1Affine, &G2Prepared)]) -> MillerLoopResult {
+    use pairing_lib::MultiMillerLoop;
+
+    Bls12::multi_miller_loop(terms)
 }

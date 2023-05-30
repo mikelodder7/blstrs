@@ -23,7 +23,7 @@ pairing_lib = { version = "0.23", package = "pairing" }
 rand_core = "0.6"
 serde = { version = "1.0", features = ["derive"], optional = true }
 subtle = "2.4"
-zeroize = "1.6"
+zeroize = { version = "1.6", features = ["zeroize_derive"] }
 
 [dev-dependencies]
 bls12_381_plus = "0.8.4"

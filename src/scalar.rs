@@ -12,10 +12,10 @@ use core::{
 
 use crate::util;
 use blst::*;
-// use byte_slice_cast::AsByteSlice;
 use ff::{Field, FieldBits, PrimeField, PrimeFieldBits};
 use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
+use zeroize::DefaultIsZeroes;
 
 /// Represents an element of the scalar field $\mathbb{F}_q$ of the BLS12-381 elliptic
 /// curve construction.
@@ -201,7 +201,7 @@ impl From<u64> for Scalar {
     fn from(val: u64) -> Scalar {
         let mut repr = [0u8; 32];
         repr[..8].copy_from_slice(&val.to_le_bytes());
-        Scalar::from_bytes_le(&repr).unwrap()
+        Scalar::from_le_bytes(&repr).unwrap()
     }
 }
 
@@ -411,6 +411,8 @@ impl Field for Scalar {
     }
 }
 
+impl DefaultIsZeroes for Scalar {}
+
 /// Checks if the passed in bytes are less than the MODULUS. (both in non-Montgomery form and little endian).
 /// Assumes that `a` is exactly 4 elements long.
 #[allow(clippy::comparison_chain)]
@@ -443,7 +445,7 @@ impl PrimeField for Scalar {
 
     /// Converts a little-endian non-Montgomery form `repr` into a Montgomery form `Scalar`.
     fn from_repr(repr: Self::Repr) -> CtOption<Self> {
-        Self::from_bytes_le(&repr)
+        Self::from_le_bytes(&repr)
     }
     fn from_repr_vartime(repr: Self::Repr) -> Option<Self> {
         let bytes_u64 = u64s_from_bytes(&repr);
@@ -585,7 +587,7 @@ impl Scalar {
 
     /// Attempts to convert a little-endian byte representation of
     /// a scalar into a `Scalar`, failing if the input is not canonical.
-    pub fn from_bytes_le(bytes: &[u8; Self::BYTES]) -> CtOption<Scalar> {
+    pub fn from_le_bytes(bytes: &[u8; Self::BYTES]) -> CtOption<Scalar> {
         let is_some =
             Choice::from(unsafe { blst_scalar_fr_check(&blst_scalar { b: *bytes }) as u8 });
 
@@ -599,10 +601,10 @@ impl Scalar {
 
     /// Attempts to convert a big-endian byte representation of
     /// a scalar into a `Scalar`, failing if the input is not canonical.
-    pub fn from_bytes_be(be_bytes: &[u8; Self::BYTES]) -> CtOption<Scalar> {
+    pub fn from_be_bytes(be_bytes: &[u8; Self::BYTES]) -> CtOption<Scalar> {
         let mut le_bytes = *be_bytes;
         le_bytes.reverse();
-        Self::from_bytes_le(&le_bytes)
+        Self::from_le_bytes(&le_bytes)
     }
 
     /// Converts an element of `Scalar` into a byte representation in
@@ -645,14 +647,14 @@ impl Scalar {
     pub fn from_be_hex(hex: &str) -> CtOption<Self> {
         let mut buf = [0u8; Self::BYTES];
         util::decode_hex_into_slice(&mut buf, hex.as_bytes());
-        Self::from_bytes_be(&buf)
+        Self::from_be_bytes(&buf)
     }
 
     /// Create a new [`Scalar`] from the provided little endian hex string.
     pub fn from_le_hex(hex: &str) -> CtOption<Self> {
         let mut buf = [0u8; Self::BYTES];
         util::decode_hex_into_slice(&mut buf, hex.as_bytes());
-        Self::from_bytes_le(&buf)
+        Self::from_le_bytes(&buf)
     }
 
     #[allow(clippy::match_like_matches_macro)]
@@ -919,7 +921,7 @@ mod tests {
     #[test]
     fn test_from_bytes() {
         assert_eq!(
-            Scalar::from_bytes_le(&[
+            Scalar::from_le_bytes(&[
                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0
             ])
@@ -928,7 +930,7 @@ mod tests {
         );
 
         assert_eq!(
-            Scalar::from_bytes_le(&[
+            Scalar::from_le_bytes(&[
                 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 0, 0, 0, 0
             ])
@@ -937,7 +939,7 @@ mod tests {
         );
 
         assert_eq!(
-            Scalar::from_bytes_le(&[
+            Scalar::from_le_bytes(&[
                 254, 255, 255, 255, 1, 0, 0, 0, 2, 72, 3, 0, 250, 183, 132, 88, 245, 79, 188, 236,
                 239, 79, 140, 153, 111, 5, 197, 172, 89, 177, 36, 24
             ])
@@ -947,7 +949,7 @@ mod tests {
 
         // -1 should work
         assert!(bool::from(
-            Scalar::from_bytes_le(&[
+            Scalar::from_le_bytes(&[
                 0, 0, 0, 0, 255, 255, 255, 255, 254, 91, 254, 255, 2, 164, 189, 83, 5, 216, 161, 9,
                 8, 216, 57, 51, 72, 125, 157, 41, 83, 167, 237, 115
             ])
@@ -955,25 +957,25 @@ mod tests {
         ));
 
         // modulus is invalid
-        assert!(bool::from(Scalar::from_bytes_le(&MODULUS_REPR).is_none()));
+        assert!(bool::from(Scalar::from_le_bytes(&MODULUS_REPR).is_none()));
 
         // Anything larger than the modulus is invalid
         assert!(bool::from(
-            Scalar::from_bytes_le(&[
+            Scalar::from_le_bytes(&[
                 2, 0, 0, 0, 255, 255, 255, 255, 254, 91, 254, 255, 2, 164, 189, 83, 5, 216, 161, 9,
                 8, 216, 57, 51, 72, 125, 157, 41, 83, 167, 237, 115
             ])
             .is_none()
         ));
         assert!(bool::from(
-            Scalar::from_bytes_le(&[
+            Scalar::from_le_bytes(&[
                 1, 0, 0, 0, 255, 255, 255, 255, 254, 91, 254, 255, 2, 164, 189, 83, 5, 216, 161, 9,
                 8, 216, 58, 51, 72, 125, 157, 41, 83, 167, 237, 115
             ])
             .is_none()
         ));
         assert!(bool::from(
-            Scalar::from_bytes_le(&[
+            Scalar::from_le_bytes(&[
                 1, 0, 0, 0, 255, 255, 255, 255, 254, 91, 254, 255, 2, 164, 189, 83, 5, 216, 161, 9,
                 8, 216, 57, 51, 72, 125, 157, 41, 83, 167, 237, 116
             ])

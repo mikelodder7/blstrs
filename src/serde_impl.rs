@@ -164,7 +164,7 @@ impl<'de> Deserialize<'de> for Scalar {
         } else {
             <[u8; 32]>::deserialize(d)?
         };
-        Option::<Scalar>::from(Scalar::from_bytes_be(&buf))
+        Option::<Scalar>::from(Scalar::from_be_bytes(&buf))
             .ok_or_else(|| D::Error::custom(ERR_CODE))
     }
 }

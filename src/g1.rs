@@ -15,7 +15,7 @@ use group::{
     Curve, Group, GroupEncoding, UncompressedEncoding, WnafGroup,
 };
 use rand_core::RngCore;
-use subtle::{Choice, ConditionallySelectable, CtOption};
+use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 
 use crate::{fp::Fp, util, Bls12, Engine, G2Affine, Gt, PairingCurveAffine, Scalar};
 
@@ -69,6 +69,12 @@ impl From<&G1Projective> for G1Affine {
 impl From<G1Projective> for G1Affine {
     fn from(p: G1Projective) -> G1Affine {
         G1Affine::from(&p)
+    }
+}
+
+impl ConstantTimeEq for G1Affine {
+    fn ct_eq(&self, other: &Self) -> Choice {
+        u8::from(unsafe { blst_p1_affine_is_equal(&self.0, &other.0) }).into()
     }
 }
 
@@ -543,14 +549,21 @@ impl From<G1Affine> for G1Projective {
     }
 }
 
+impl ConstantTimeEq for G1Projective {
+    fn ct_eq(&self, other: &Self) -> Choice {
+        let self_is_zero: bool = self.is_identity().into();
+        let other_is_zero: bool = other.is_identity().into();
+        let b = (self_is_zero && other_is_zero)
+            || (!self_is_zero && !other_is_zero && unsafe { blst_p1_is_equal(&self.0, &other.0) });
+        u8::from(b).into()
+    }
+}
+
 impl Eq for G1Projective {}
 impl PartialEq for G1Projective {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
-        let self_is_zero: bool = self.is_identity().into();
-        let other_is_zero: bool = other.is_identity().into();
-        (self_is_zero && other_is_zero)
-            || (!self_is_zero && !other_is_zero && unsafe { blst_p1_is_equal(&self.0, &other.0) })
+        self.ct_eq(other).into()
     }
 }
 

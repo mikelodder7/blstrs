@@ -1,4 +1,4 @@
-use crate::{Bls12, fp12::Fp12, G1Affine, G2Affine, G2Prepared, Gt};
+use crate::{fp12::Fp12, Bls12, G1Affine, G2Affine, G2Prepared, Gt};
 use core::ops::{Add, AddAssign};
 use ff::Field;
 use subtle::{Choice, ConditionallySelectable};

@@ -7,6 +7,8 @@ use core::{
     fmt,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+#[cfg(feature = "hashing")]
+use elliptic_curve::hash2curve::{ExpandMsg, Expander};
 use ff::Field;
 use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -246,6 +248,44 @@ impl Fp2 {
     pub fn is_quad_res(&self) -> bool {
         self.sqrt().is_some().into()
     }
+
+    #[cfg(feature = "hashing")]
+    /// Take 64 bytes and compute the result reduced by the field modulus
+    pub fn from_random_bytes(okm: [u8; 128]) -> Self {
+        Self(blst_fp2 {
+            fp: [
+                Fp::from_random_bytes(<[u8; 64]>::try_from(&okm[..64]).unwrap()).0,
+                Fp::from_random_bytes(<[u8; 64]>::try_from(&okm[64..]).unwrap()).0,
+            ],
+        })
+    }
+
+    #[cfg(feature = "hashing")]
+    pub(crate) fn hash<X>(msg: &[u8], dst: &[u8]) -> [Self; 2]
+    where
+        X: for<'a> ExpandMsg<'a>,
+    {
+        let dst = [dst];
+        let mut random_bytes = [0u8; 256];
+        let mut expander = X::expand_message(&[msg], &dst, random_bytes.len()).unwrap();
+        expander.fill_bytes(&mut random_bytes);
+        [
+            Fp2::from_random_bytes(<[u8; 128]>::try_from(&random_bytes[..128]).unwrap()),
+            Fp2::from_random_bytes(<[u8; 128]>::try_from(&random_bytes[128..]).unwrap()),
+        ]
+    }
+
+    #[cfg(feature = "hashing")]
+    pub(crate) fn encode<X>(msg: &[u8], dst: &[u8]) -> Self
+    where
+        X: for<'a> ExpandMsg<'a>,
+    {
+        let dst = [dst];
+        let mut random_bytes = [0u8; 128];
+        let mut expander = X::expand_message(&[msg], &dst, random_bytes.len()).unwrap();
+        expander.fill_bytes(&mut random_bytes);
+        Fp2::from_random_bytes(random_bytes)
+    }
 }
 
 impl Field for Fp2 {
@@ -293,34 +333,6 @@ impl Field for Fp2 {
     fn sqrt_ratio(_num: &Self, _div: &Self) -> (Choice, Self) {
         // ff::helpers::sqrt_ratio_generic(num, div)
         unimplemented!()
-    }
-}
-
-#[cfg(feature = "gpu")]
-impl ec_gpu::GpuName for Fp2 {
-    fn name() -> String {
-        ec_gpu::name!()
-    }
-}
-
-// Use `one`, `r2` and `modulus` from the sub-field.
-#[cfg(feature = "gpu")]
-impl ec_gpu::GpuField for Fp2 {
-    fn one() -> Vec<u32> {
-        <Fp as ec_gpu::GpuField>::one()
-    }
-
-    fn r2() -> Vec<u32> {
-        Fp::r2()
-    }
-
-    fn modulus() -> Vec<u32> {
-        Fp::modulus()
-    }
-
-    fn sub_field_name() -> Option<String> {
-        use ec_gpu::GpuName;
-        Some(Fp::name())
     }
 }
 

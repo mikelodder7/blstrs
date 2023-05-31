@@ -7,6 +7,8 @@ use core::{
     cmp, fmt,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+#[cfg(feature = "hashing")]
+use elliptic_curve::hash2curve::{ExpandMsg, Expander};
 use ff::Field;
 use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -57,6 +59,19 @@ const R2: Fp = Fp(blst_fp {
         0x67eb_88a9_939d_83c0,
         0x9a79_3e85_b519_952d,
         0x1198_8fe5_92ca_e3aa,
+    ],
+});
+
+#[cfg(feature = "hashing")]
+/// R3 = 2^(384*3) mod p
+const R3: Fp = Fp(blst_fp {
+    l: [
+        0xed48_ac6b_d94c_a1e0,
+        0x315f_831e_03a7_adf8,
+        0x9a53_352a_615e_29dd,
+        0x34c0_4e5e_921e_1761,
+        0x2512_d435_6572_4728,
+        0x0aa6_3460_9175_5d4d,
     ],
 });
 
@@ -656,6 +671,78 @@ impl Fp {
     #[inline]
     pub fn square_assign(&mut self) {
         unsafe { blst_fp_sqr(&mut self.0, &self.0) };
+    }
+
+    #[cfg(feature = "hashing")]
+    /// Reduces a big-endian 64-bit limb representation of a 768-bit number.
+    fn from_u768(limbs: [u64; 12]) -> Self {
+        // We reduce an arbitrary 768-bit number by decomposing it into two 384-bit digits
+        // with the higher bits multiplied by 2^384. Thus, we perform two reductions
+        //
+        // 1. the lower bits are multiplied by R^2, as normal
+        // 2. the upper bits are multiplied by R^2 * 2^384 = R^3
+        //
+        // and computing their sum in the field. It remains to see that arbitrary 384-bit
+        // numbers can be placed into Montgomery form safely using the reduction. The
+        // reduction works so long as the product is less than R=2^384 multiplied by
+        // the modulus. This holds because for any `c` smaller than the modulus, we have
+        // that (2^384 - 1)*c is an acceptable product for the reduction. Therefore, the
+        // reduction always works so long as `c` is in the field; in this case it is either the
+        // constant `R2` or `R3`.
+        let d1 = Fp(blst_fp {
+            l: [limbs[6], limbs[7], limbs[8], limbs[9], limbs[10], limbs[11]],
+        });
+        let d0 = Fp(blst_fp {
+            l: [limbs[0], limbs[1], limbs[2], limbs[3], limbs[4], limbs[5]],
+        });
+        // Convert to Montgomery form
+        d0 * R2 + d1 * R3
+    }
+
+    #[cfg(feature = "hashing")]
+    /// Take 64 bytes and compute the result reduced by the field modulus
+    pub(crate) fn from_random_bytes(okm: [u8; 64]) -> Self {
+        Self::from_u768([
+            u64::from_be_bytes(<[u8; 8]>::try_from(&okm[56..64]).unwrap()),
+            u64::from_be_bytes(<[u8; 8]>::try_from(&okm[48..56]).unwrap()),
+            u64::from_be_bytes(<[u8; 8]>::try_from(&okm[40..48]).unwrap()),
+            u64::from_be_bytes(<[u8; 8]>::try_from(&okm[32..40]).unwrap()),
+            u64::from_be_bytes(<[u8; 8]>::try_from(&okm[24..32]).unwrap()),
+            u64::from_be_bytes(<[u8; 8]>::try_from(&okm[16..24]).unwrap()),
+            u64::from_be_bytes(<[u8; 8]>::try_from(&okm[8..16]).unwrap()),
+            u64::from_be_bytes(<[u8; 8]>::try_from(&okm[0..8]).unwrap()),
+            0u64,
+            0u64,
+            0u64,
+            0u64,
+        ])
+    }
+
+    #[cfg(feature = "hashing")]
+    pub(crate) fn hash<X>(msg: &[u8], dst: &[u8]) -> [Self; 2]
+    where
+        X: for<'a> ExpandMsg<'a>,
+    {
+        let dst = [dst];
+        let mut random_bytes = [0u8; 128];
+        let mut expander = X::expand_message(&[msg], &dst, random_bytes.len()).unwrap();
+        expander.fill_bytes(&mut random_bytes);
+        [
+            Fp::from_random_bytes(<[u8; 64]>::try_from(&random_bytes[..64]).unwrap()),
+            Fp::from_random_bytes(<[u8; 64]>::try_from(&random_bytes[64..]).unwrap()),
+        ]
+    }
+
+    #[cfg(feature = "hashing")]
+    pub(crate) fn encode<X>(msg: &[u8], dst: &[u8]) -> Fp
+    where
+        X: for<'a> ExpandMsg<'a>,
+    {
+        let dst = [dst];
+        let mut random_bytes = [0u8; 64];
+        let mut expander = X::expand_message(&[msg], &dst, random_bytes.len()).unwrap();
+        expander.fill_bytes(&mut random_bytes);
+        Fp::from_random_bytes(random_bytes)
     }
 }
 

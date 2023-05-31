@@ -45,6 +45,7 @@ use ff::Field;
 use group::prime::PrimeCurveAffine;
 use pairing_lib::{Engine, MultiMillerLoop, PairingCurveAffine};
 
+pub use elliptic_curve;
 pub use ff;
 pub use group;
 pub use pairing_lib;

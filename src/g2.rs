@@ -8,8 +8,12 @@ use core::{
 };
 
 use blst::*;
+use elliptic_curve::consts::U96;
+use elliptic_curve::generic_array::GenericArray;
 #[cfg(feature = "hashing")]
 use elliptic_curve::hash2curve::ExpandMsg;
+use elliptic_curve::ops::{LinearCombination, MulByGenerator};
+use elliptic_curve::point::AffineCoordinates;
 use ff::Field;
 use group::{
     prime::{PrimeCurve, PrimeCurveAffine, PrimeGroup},
@@ -338,6 +342,27 @@ impl ConditionallySelectable for G2Projective {
             y: Fp2::conditional_select(&a.y(), &b.y(), choice).0,
             z: Fp2::conditional_select(&a.z(), &b.z(), choice).0,
         })
+    }
+}
+
+impl AffineCoordinates for G2Affine {
+    type FieldRepr = GenericArray<u8, U96>;
+
+    fn x(&self) -> Self::FieldRepr {
+        let x = self.x();
+        let mut res = GenericArray::<u8, U96>::default();
+        res[0..48].copy_from_slice(&x.c1().to_bytes_be()[..]);
+        res[48..96].copy_from_slice(&x.c0().to_bytes_be()[..]);
+        res
+    }
+
+    fn y_is_odd(&self) -> Choice {
+        let y = self.y();
+        if y.c0().is_zero().into() {
+            (y.c1().to_bytes_be()[47] & 1).into()
+        } else {
+            (y.c0().to_bytes_be()[47] & 1).into()
+        }
     }
 }
 
@@ -839,6 +864,10 @@ impl GroupEncoding for G2Projective {
         G2Compressed(self.to_compressed())
     }
 }
+
+impl MulByGenerator for G2Projective {}
+
+impl LinearCombination for G2Projective {}
 
 impl GroupEncoding for G2Affine {
     type Repr = G2Compressed;

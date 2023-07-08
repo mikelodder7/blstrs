@@ -6,6 +6,10 @@ use core::{
     iter::Sum,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+use elliptic_curve::consts::U48;
+use elliptic_curve::generic_array::GenericArray;
+use elliptic_curve::ops::{LinearCombination, MulByGenerator};
+use elliptic_curve::point::AffineCoordinates;
 use std::io::Read;
 
 use blst::*;
@@ -30,6 +34,18 @@ pub struct G1Affine(pub(crate) blst_p1_affine);
 
 const COMPRESSED_SIZE: usize = 48;
 const UNCOMPRESSED_SIZE: usize = 96;
+
+impl AffineCoordinates for G1Affine {
+    type FieldRepr = GenericArray<u8, U48>;
+
+    fn x(&self) -> Self::FieldRepr {
+        GenericArray::<u8, U48>::clone_from_slice(&self.x().to_bytes_be())
+    }
+
+    fn y_is_odd(&self) -> Choice {
+        (self.y().to_bytes_be()[47] & 1).into()
+    }
+}
 
 impl fmt::Debug for G1Affine {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -580,6 +596,10 @@ impl fmt::UpperHex for G1Projective {
         write!(f, "{:X}", self.to_affine())
     }
 }
+
+impl MulByGenerator for G1Projective {}
+
+impl LinearCombination for G1Projective {}
 
 impl G1Projective {
     /// Bytes to represent this point compressed

@@ -10,8 +10,14 @@ use core::{
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-use crate::util;
+use crate::{util, Bls12381G1};
 use blst::*;
+use elliptic_curve::bigint::{ArrayEncoding, Encoding, U256, U384, U512};
+use elliptic_curve::consts::{U32, U48, U64};
+use elliptic_curve::generic_array::GenericArray;
+use elliptic_curve::ops::{Invert, Reduce};
+use elliptic_curve::scalar::{FromUintUnchecked, IsHigh};
+use elliptic_curve::ScalarPrimitive;
 use ff::{Field, FieldBits, PrimeField, PrimeFieldBits};
 use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
@@ -61,6 +67,14 @@ const MODULUS_LIMBS_32: [u32; 8] = [
 const MODULUS_REPR: [u8; 32] = [
     0x01, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x5b, 0xfe, 0xff, 0x02, 0xa4, 0xbd, 0x53,
     0x05, 0xd8, 0xa1, 0x09, 0x08, 0xd8, 0x39, 0x33, 0x48, 0x7d, 0x9d, 0x29, 0x53, 0xa7, 0xed, 0x73,
+];
+
+/// q >> 1 = 39f6d3a994cebea4199cec0404d0ec02a9ded2017fff2dff7fffffff80000000
+const HALF_MODULUS: [u64; 4] = [
+    0x7fff_ffff_8000_0000,
+    0xa9de_d201_7fff_2dff,
+    0x199c_ec04_04d0_ec02,
+    0x39f6_d3a9_94ce_bea4,
 ];
 
 // `2^S` root of unity in little-endian Montgomery form.
@@ -201,6 +215,14 @@ impl From<u64> for Scalar {
     fn from(val: u64) -> Scalar {
         let mut repr = [0u8; 32];
         repr[..8].copy_from_slice(&val.to_le_bytes());
+        Scalar::from_le_bytes(&repr).unwrap()
+    }
+}
+
+impl From<u32> for Scalar {
+    fn from(val: u32) -> Self {
+        let mut repr = [0u8; 32];
+        repr[..4].copy_from_slice(&val.to_le_bytes());
         Scalar::from_le_bytes(&repr).unwrap()
     }
 }
@@ -577,6 +599,207 @@ impl UpperHex for Scalar {
     }
 }
 
+impl AsRef<Scalar> for Scalar {
+    fn as_ref(&self) -> &Scalar {
+        self
+    }
+}
+
+impl From<ScalarPrimitive<Bls12381G1>> for Scalar {
+    fn from(value: ScalarPrimitive<Bls12381G1>) -> Self {
+        Self::from_uint_unchecked(*value.as_uint())
+    }
+}
+
+impl From<&ScalarPrimitive<Bls12381G1>> for Scalar {
+    fn from(value: &ScalarPrimitive<Bls12381G1>) -> Self {
+        Self::from_uint_unchecked(*value.as_uint())
+    }
+}
+
+impl From<Scalar> for ScalarPrimitive<Bls12381G1> {
+    fn from(value: Scalar) -> Self {
+        ScalarPrimitive::from(&value)
+    }
+}
+
+impl From<&Scalar> for ScalarPrimitive<Bls12381G1> {
+    fn from(value: &Scalar) -> Self {
+        let mut out = [0u64; 6];
+        out[..4].copy_from_slice(&value.to_raw());
+        ScalarPrimitive::new(U384::from_words(out)).unwrap()
+    }
+}
+
+impl From<GenericArray<u8, U48>> for Scalar {
+    fn from(value: GenericArray<u8, U48>) -> Self {
+        Self::from_uint_unchecked(U384::from_be_byte_array(value))
+    }
+}
+
+impl From<Scalar> for GenericArray<u8, U48> {
+    fn from(value: Scalar) -> Self {
+        let mut arr = GenericArray::<u8, U48>::default();
+        arr[16..].copy_from_slice(&value.to_be_bytes());
+        arr
+    }
+}
+
+impl From<GenericArray<u8, U32>> for Scalar {
+    fn from(value: GenericArray<u8, U32>) -> Self {
+        let arr: [u8; 32] = <[u8; 32]>::try_from(value.as_slice()).unwrap();
+        Self::from_be_bytes(&arr).unwrap()
+    }
+}
+
+impl From<Scalar> for GenericArray<u8, U32> {
+    fn from(value: Scalar) -> Self {
+        GenericArray::clone_from_slice(&value.to_be_bytes())
+    }
+}
+
+impl From<U256> for Scalar {
+    fn from(value: U256) -> Self {
+        Self::reduce(value)
+    }
+}
+
+impl From<Scalar> for U256 {
+    fn from(value: Scalar) -> Self {
+        let mut arr = value.to_raw();
+        arr.reverse();
+        U256::from_words(arr)
+    }
+}
+
+impl From<U384> for Scalar {
+    fn from(value: U384) -> Self {
+        Self::from_uint_unchecked(value)
+    }
+}
+
+impl From<Scalar> for U384 {
+    fn from(value: Scalar) -> Self {
+        let raw = value.to_raw();
+        let arr = [0u64, 0u64, raw[3], raw[2], raw[1], raw[0]];
+        U384::from_words(arr)
+    }
+}
+
+impl From<U512> for Scalar {
+    fn from(value: U512) -> Self {
+        Self::reduce(value)
+    }
+}
+
+impl From<Scalar> for U512 {
+    fn from(value: Scalar) -> Self {
+        let raw = value.to_raw();
+        let arr = [0u64, 0u64, 0u64, 0u64, raw[3], raw[2], raw[1], raw[0]];
+        U512::from_words(arr)
+    }
+}
+
+impl FromUintUnchecked for Scalar {
+    type Uint = U384;
+
+    fn from_uint_unchecked(uint: Self::Uint) -> Self {
+        let mut out = [0u64; 4];
+        out.copy_from_slice(&uint.as_words()[..4]);
+        Scalar::from_raw(&out).unwrap()
+    }
+}
+
+impl Invert for Scalar {
+    type Output = CtOption<Self>;
+
+    fn invert(&self) -> Self::Output {
+        <Scalar as Field>::invert(self)
+    }
+}
+
+impl IsHigh for Scalar {
+    fn is_high(&self) -> Choice {
+        /// Compute a - (b + borrow), returning the result and the new borrow.
+        #[inline(always)]
+        const fn sbb(a: u64, b: u64, borrow: u64) -> (u64, u64) {
+            let ret = (a as u128).wrapping_sub((b as u128) + ((borrow >> 63) as u128));
+            (ret as u64, (ret >> 64) as u64)
+        }
+
+        let t = self.to_raw();
+
+        let mut borrow = 0;
+        for i in 0..4 {
+            let (_, b) = sbb(HALF_MODULUS[i], t[i], borrow);
+            borrow = b;
+        }
+        ((borrow == u64::MAX) as u8).into()
+    }
+}
+
+impl core::ops::Shr<usize> for Scalar {
+    type Output = Self;
+
+    fn shr(self, rhs: usize) -> Self::Output {
+        let mut out = self;
+        out >>= rhs;
+        out
+    }
+}
+
+impl core::ops::Shr<usize> for &Scalar {
+    type Output = Scalar;
+
+    fn shr(self, rhs: usize) -> Self::Output {
+        *self >> rhs
+    }
+}
+
+impl core::ops::ShrAssign<usize> for Scalar {
+    fn shr_assign(&mut self, rhs: usize) {
+        unsafe { blst_fr_rshift(&mut self.0, &self.0, rhs) };
+    }
+}
+
+impl Reduce<U256> for Scalar {
+    type Bytes = GenericArray<u8, U32>;
+
+    fn reduce(n: U256) -> Self {
+        let mut out = [0u8; 48];
+        out[..32].copy_from_slice(&n.to_be_bytes());
+        Self::from_okm(&out)
+    }
+
+    fn reduce_bytes(bytes: &Self::Bytes) -> Self {
+        Self::reduce(U256::from_be_byte_array(*bytes))
+    }
+}
+
+impl Reduce<U384> for Scalar {
+    type Bytes = GenericArray<u8, U48>;
+
+    fn reduce(n: U384) -> Self {
+        Self::from_okm(&n.to_be_bytes())
+    }
+
+    fn reduce_bytes(bytes: &Self::Bytes) -> Self {
+        Self::reduce(U384::from_be_byte_array(*bytes))
+    }
+}
+
+impl Reduce<U512> for Scalar {
+    type Bytes = GenericArray<u8, U64>;
+
+    fn reduce(n: U512) -> Self {
+        Self::from_u512(*n.as_words())
+    }
+
+    fn reduce_bytes(bytes: &Self::Bytes) -> Self {
+        Self::reduce(U512::from_be_byte_array(*bytes))
+    }
+}
+
 impl Scalar {
     /// Bytes to represent this field
     pub const BYTES: usize = 32;
@@ -644,7 +867,7 @@ impl Scalar {
     }
 
     /// Converts from a scalar to an integer represented in little endian
-    pub(crate) fn to_raw(&self) -> [u64; 4] {
+    pub fn to_raw(&self) -> [u64; 4] {
         let mut out = [0u64; 4];
         unsafe { blst_uint64_from_fr(out.as_mut_ptr(), &self.0) };
         out
@@ -806,6 +1029,20 @@ impl Scalar {
         });
         // Convert to Montgomery form
         d0 * R2 + d1 * R3
+    }
+
+    #[cfg(feature = "hashing")]
+    pub fn hash<X>(msg: &[u8], dst: &[u8]) -> Self
+    where
+        X: for<'a> elliptic_curve::hash2curve::ExpandMsg<'a>,
+    {
+        use elliptic_curve::hash2curve::Expander;
+
+        let d = [dst];
+        let mut expander = X::expand_message(&[msg], &d, 48).unwrap();
+        let mut out = [0u8; 48];
+        expander.fill_bytes(&mut out);
+        Scalar::from_okm(&out)
     }
 }
 

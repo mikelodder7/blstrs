@@ -673,6 +673,7 @@ impl G1Projective {
         G1Affine::from_uncompressed(bytes).map(Into::into)
     }
 
+    /// Attempts to deserialize an uncompressed element from a hex string.
     pub fn from_uncompressed_hex(hex: &str) -> CtOption<Self> {
         G1Affine::from_uncompressed_hex(hex).map(Into::into)
     }
@@ -691,6 +692,7 @@ impl G1Projective {
         G1Affine::from_compressed(bytes).map(Into::into)
     }
 
+    /// Attempts to deserialize a compressed element from a hex string.
     pub fn from_compressed_hex(hex: &str) -> CtOption<Self> {
         G1Affine::from_compressed_hex(hex).map(Into::into)
     }

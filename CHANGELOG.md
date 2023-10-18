@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+## [0.8.9] - 2023-10-18
+
+- Match bls12_381_plus methods
+
 ## [0.8.6] - 2023-10-18
 
 - Fixed issue with 32-bit builds

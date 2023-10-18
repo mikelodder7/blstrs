@@ -15,7 +15,7 @@ use blst::*;
 use elliptic_curve::bigint::{ArrayEncoding, Encoding, U256, U384, U512};
 use elliptic_curve::consts::{U32, U48, U64};
 use elliptic_curve::generic_array::GenericArray;
-use elliptic_curve::ops::{Invert, Reduce};
+use elliptic_curve::ops::Reduce;
 use elliptic_curve::scalar::{FromUintUnchecked, IsHigh};
 use elliptic_curve::ScalarPrimitive;
 use ff::{Field, FieldBits, PrimeField, PrimeFieldBits};
@@ -625,9 +625,18 @@ impl From<Scalar> for ScalarPrimitive<Bls12381G1> {
 
 impl From<&Scalar> for ScalarPrimitive<Bls12381G1> {
     fn from(value: &Scalar) -> Self {
-        let mut out = [0u64; 6];
-        out[..4].copy_from_slice(&value.to_raw());
-        ScalarPrimitive::new(U384::from_words(out)).unwrap()
+        #[cfg(target_pointer_width = "64")]
+        {
+            let mut out = [0u64; 6];
+            out[..4].copy_from_slice(&value.to_raw());
+            ScalarPrimitive::new(U384::from_words(out)).unwrap()
+        }
+        #[cfg(target_pointer_width = "32")]
+        {
+            let mut out = [0u32; 12];
+            raw_scalar_to_32bit_le_array(value, &mut out);
+            ScalarPrimitive::new(U384::from_words(out)).unwrap()
+        }
     }
 }
 
@@ -666,9 +675,17 @@ impl From<U256> for Scalar {
 
 impl From<Scalar> for U256 {
     fn from(value: Scalar) -> Self {
-        let mut arr = value.to_raw();
-        arr.reverse();
-        U256::from_words(arr)
+        #[cfg(target_pointer_width = "64")]
+        {
+            let arr = value.to_raw();
+            U256::from_words(arr)
+        }
+        #[cfg(target_pointer_width = "32")]
+        {
+            let mut out = [0u32; 8];
+            raw_scalar_to_32bit_le_array(&value, &mut out);
+            U256::from_words(out)
+        }
     }
 }
 
@@ -680,9 +697,18 @@ impl From<U384> for Scalar {
 
 impl From<Scalar> for U384 {
     fn from(value: Scalar) -> Self {
-        let raw = value.to_raw();
-        let arr = [0u64, 0u64, raw[3], raw[2], raw[1], raw[0]];
-        U384::from_words(arr)
+        #[cfg(target_pointer_width = "64")]
+        {
+            let raw = value.to_raw();
+            let arr = [0u64, 0u64, raw[3], raw[2], raw[1], raw[0]];
+            U384::from_words(arr)
+        }
+        #[cfg(target_pointer_width = "32")]
+        {
+            let mut out = [0u32; 12];
+            raw_scalar_to_32bit_le_array(&value, &mut out);
+            U384::from_words(out)
+        }
     }
 }
 
@@ -694,9 +720,18 @@ impl From<U512> for Scalar {
 
 impl From<Scalar> for U512 {
     fn from(value: Scalar) -> Self {
-        let raw = value.to_raw();
-        let arr = [0u64, 0u64, 0u64, 0u64, raw[3], raw[2], raw[1], raw[0]];
-        U512::from_words(arr)
+        #[cfg(target_pointer_width = "64")]
+        {
+            let raw = value.to_raw();
+            let arr = [0u64, 0u64, 0u64, 0u64, raw[3], raw[2], raw[1], raw[0]];
+            U512::from_words(arr)
+        }
+        #[cfg(target_pointer_width = "32")]
+        {
+            let mut out = [0u32; 16];
+            raw_scalar_to_32bit_le_array(&value, &mut out);
+            U512::from_words(out)
+        }
     }
 }
 
@@ -705,12 +740,27 @@ impl FromUintUnchecked for Scalar {
 
     fn from_uint_unchecked(uint: Self::Uint) -> Self {
         let mut out = [0u64; 4];
-        out.copy_from_slice(&uint.as_words()[..4]);
-        Scalar::from_raw(&out).unwrap()
+        #[cfg(target_pointer_width = "64")]
+        {
+            out.copy_from_slice(&uint.as_words()[..4]);
+            Scalar::from_raw(&out).unwrap()
+        }
+        #[cfg(target_pointer_width = "32")]
+        {
+            let words = uint.as_words();
+            let mut i = 0;
+            let mut j = 0;
+            while i < words.len() {
+                out[j] = (words[i] as u64) << 32 | words[i] as u64;
+                i += 2;
+                j += 1;
+            }
+            Scalar::from_raw(&out).unwrap()
+        }
     }
 }
 
-impl Invert for Scalar {
+impl elliptic_curve::ops::Invert for Scalar {
     type Output = CtOption<Self>;
 
     fn invert(&self) -> Self::Output {
@@ -792,7 +842,22 @@ impl Reduce<U512> for Scalar {
     type Bytes = GenericArray<u8, U64>;
 
     fn reduce(n: U512) -> Self {
-        Self::from_u512(*n.as_words())
+        #[cfg(target_pointer_width = "64")]
+        {
+            Self::from_u512(*n.as_words())
+        }
+        #[cfg(target_pointer_width = "32")]
+        {
+            let words = n.as_words();
+            let mut arr = [0u64; 8];
+            let mut i = 0;
+            for index in arr.iter_mut() {
+                *index = (words[i + 1] as u64) << 32;
+                *index |= words[i] as u64;
+                i += 2;
+            }
+            Self::from_u512(arr)
+        }
     }
 
     fn reduce_bytes(bytes: &Self::Bytes) -> Self {
@@ -1043,6 +1108,21 @@ impl Scalar {
         let mut out = [0u8; 48];
         expander.fill_bytes(&mut out);
         Scalar::from_okm(&out)
+    }
+}
+
+#[cfg(target_pointer_width = "32")]
+fn raw_scalar_to_32bit_le_array(scalar: &Scalar, arr: &mut [u32]) {
+    let raw = scalar.to_raw();
+    let mut i = 0;
+    let mut j = 0;
+
+    while j < raw.len() {
+        arr[i] = raw[j] as u32;
+        arr[i + 1] = (raw[j] >> 32) as u32;
+
+        i += 2;
+        j += 1;
     }
 }
 
@@ -1489,7 +1569,7 @@ mod tests {
 
     #[test]
     fn test_scalar_from_u64() {
-        let a = Scalar::from(100);
+        let a = Scalar::from(100u32);
         let mut expected_bytes = [0u8; 32];
         expected_bytes[0] = 100;
         assert_eq!(a.to_le_bytes(), expected_bytes);
@@ -1497,16 +1577,16 @@ mod tests {
 
     #[test]
     fn test_scalar_is_odd() {
-        assert!(bool::from(Scalar::from(0).is_even()));
-        assert!(bool::from(Scalar::from(1).is_odd()));
-        assert!(bool::from(Scalar::from(324834872).is_even()));
-        assert!(bool::from(Scalar::from(324834873).is_odd()));
+        assert!(bool::from(Scalar::from(0u32).is_even()));
+        assert!(bool::from(Scalar::from(1u32).is_odd()));
+        assert!(bool::from(Scalar::from(324834872u32).is_even()));
+        assert!(bool::from(Scalar::from(324834873u32).is_odd()));
     }
 
     #[test]
     fn test_scalar_is_zero() {
-        assert!(bool::from(Scalar::from(0).is_zero()));
-        assert!(!bool::from(Scalar::from(1).is_zero()));
+        assert!(bool::from(Scalar::from(0u64).is_zero()));
+        assert!(!bool::from(Scalar::from(1u64).is_zero()));
         assert!(!bool::from(
             Scalar::from_raw(&[0, 0, 1, 0]).unwrap().is_zero()
         ));
@@ -1517,9 +1597,9 @@ mod tests {
         assert_eq!(Scalar::NUM_BITS, 255);
         assert_eq!(Scalar::CAPACITY, 254);
 
-        let mut a = Scalar::from(0);
+        let mut a = Scalar::from(0u64);
         assert_eq!(0, a.num_bits());
-        a = Scalar::from(1);
+        a = Scalar::from(1u64);
         assert_eq!(1, a.num_bits());
         for i in 2..Scalar::NUM_BITS {
             a = a.shl(1);
@@ -2131,7 +2211,7 @@ mod tests {
     #[test]
     fn test_scalar_root_of_unity() {
         assert_eq!(Scalar::S, 32);
-        assert_eq!(Scalar::MULTIPLICATIVE_GENERATOR, Scalar::from(7));
+        assert_eq!(Scalar::MULTIPLICATIVE_GENERATOR, Scalar::from(7u64));
         assert_eq!(
             Scalar::MULTIPLICATIVE_GENERATOR.pow_vartime([
                 0xfffe5bfeffffffff,
@@ -2157,14 +2237,14 @@ mod tests {
 
     #[test]
     fn test_scalar_repr_conversion() {
-        let a = Scalar::from(1);
+        let a = Scalar::ONE;
         let mut expected_bytes = [0u8; 32];
         expected_bytes[0] = 1;
         assert_eq!(a, Scalar::from_repr(a.to_repr()).unwrap());
         assert_eq!(a.to_repr(), expected_bytes);
         assert_eq!(a, Scalar::from_repr(expected_bytes).unwrap());
 
-        let a = Scalar::from(12);
+        let a = Scalar::from(12u32);
         let mut expected_bytes = [0u8; 32];
         expected_bytes[0] = 12;
         assert_eq!(a, Scalar::from_repr(a.to_repr()).unwrap());
@@ -2174,14 +2254,14 @@ mod tests {
 
     #[test]
     fn test_scalar_repr_vartime_conversion() {
-        let a = Scalar::from(1);
+        let a = Scalar::ONE;
         let mut expected_bytes = [0u8; 32];
         expected_bytes[0] = 1;
         assert_eq!(a, Scalar::from_repr_vartime(a.to_repr()).unwrap());
         assert_eq!(a.to_repr(), expected_bytes);
         assert_eq!(a, Scalar::from_repr_vartime(expected_bytes).unwrap());
 
-        let a = Scalar::from(12);
+        let a = Scalar::from(12u64);
         let mut expected_bytes = [0u8; 32];
         expected_bytes[0] = 12;
         assert_eq!(a, Scalar::from_repr_vartime(a.to_repr()).unwrap());
@@ -2222,7 +2302,7 @@ mod tests {
     #[test]
     fn m1_inv_bug() {
         // This fails on aarch64-darwin.
-        let bad = Scalar::ZERO - Scalar::from(7);
+        let bad = Scalar::ZERO - Scalar::from(7u64);
 
         let inv = bad.invert().unwrap();
         let check = inv * bad;
@@ -2231,7 +2311,7 @@ mod tests {
     #[test]
     fn m1_inv_bug_more() {
         let mut bad = Vec::new();
-        for i in 1..1000000 {
+        for i in 1u64..1000000 {
             // Ensure that a * a^-1 = 1
             let a = Scalar::ZERO - Scalar::from(i);
             let ainv = a.invert().unwrap();

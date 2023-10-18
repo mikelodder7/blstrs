@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+## [0.8.6] - 2023-10-18
+
+- Fixed issue with 32-bit builds
+
 ## [0.1.0] - 2020-10-08
 
 - Initial release

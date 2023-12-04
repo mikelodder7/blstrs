@@ -119,6 +119,38 @@ impl Mul<&Scalar> for &Gt {
     }
 }
 
+impl Mul<&Gt> for &Gt {
+    type Output = Gt;
+
+    fn mul(self, rhs: &Gt) -> Self::Output {
+        *self * *rhs
+    }
+}
+
+impl Mul<&Gt> for Gt {
+    type Output = Self;
+
+    fn mul(self, rhs: &Gt) -> Self::Output {
+        self * *rhs
+    }
+}
+
+impl Mul<Gt> for &Gt {
+    type Output = Gt;
+
+    fn mul(self, rhs: Gt) -> Self::Output {
+        *self * rhs
+    }
+}
+
+impl Mul for Gt {
+    type Output = Gt;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Gt::product(&self, &rhs)
+    }
+}
+
 impl AddAssign<&Gt> for Gt {
     #[inline]
     fn add_assign(&mut self, rhs: &Gt) {
@@ -471,6 +503,10 @@ impl Gt {
     fn is_in_subgroup(&self) -> bool {
         unsafe { blst_fp12_in_group(&(self.0).0) }
     }
+
+    pub fn product(a: &Self, b: &Self) -> Self {
+        Self(a.0.mul(b.0))
+    }
 }
 
 impl GtCompressed {
@@ -764,5 +800,71 @@ mod tests {
             gt1.to_bytes().as_ref(),
             GroupEncoding::to_bytes(&gt2).as_ref()
         );
+    }
+
+    #[test]
+    fn test_product() {
+        use crate::Scalar;
+        use rand_core::SeedableRng;
+        use rand_xorshift::XorShiftRng;
+
+        // tests Gt * Gt
+        let s1 = Gt::generator();
+        let s2 = Gt::generator();
+        let s3 = s1 * s2;
+        let s4 = s2 * s1;
+        assert_eq!(s3, s4);
+
+        // test borrowed versions as well
+
+        let seed = [1u8; 16];
+        let seed_2 = [2u8; 16];
+        let rng_1 = XorShiftRng::from_seed(seed);
+        let rng_2 = XorShiftRng::from_seed(seed_2);
+
+        let t1 = Gt::random(rng_1);
+        let t2 = Gt::random(rng_2);
+
+        let s1 = &t1 * t2;
+        let s2 = t2 * &t1;
+
+        assert_eq!(s1, s2);
+
+        // test from Scalars, too
+
+        let a = Scalar::from_raw(&[1u64, 2, 3, 4])
+            .unwrap()
+            .invert()
+            .unwrap()
+            .square();
+        let b = Scalar::from_raw(&[5u64, 6, 7, 8])
+            .unwrap()
+            .invert()
+            .unwrap()
+            .square();
+
+        let d = G1Affine::from(G1Affine::generator() * a);
+        let e = G2Affine::from(G2Affine::generator() * b);
+        let f = pairing(&d, &e);
+
+        let g = Scalar::from_raw(&[4u64, 2, 3, 4])
+            .unwrap()
+            .invert()
+            .unwrap()
+            .square();
+        let h = Scalar::from_raw(&[8u64, 6, 7, 8])
+            .unwrap()
+            .invert()
+            .unwrap()
+            .square();
+
+        let j = G1Affine::from(G1Affine::generator() * g);
+        let k = G2Affine::from(G2Affine::generator() * h);
+        let l = pairing(&j, &k);
+
+        let product = f * l;
+        let product_2 = pairing(&d, &e) * pairing(&j, &k);
+
+        assert_eq!(product, product_2);
     }
 }

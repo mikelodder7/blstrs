@@ -931,6 +931,18 @@ impl Scalar {
         CtOption::new(Scalar(out), is_some)
     }
 
+    // /// Converts from an integer represented in little endian
+    // /// into its (congruent) `Scalar` representation.
+    // pub const fn from_raw_unchecked(val: &[u64; 4]) -> Self {
+    //     let mut raw = blst_scalar::default();
+    //     let mut out = blst_fr::default();
+    //
+    //     unsafe { blst_scalar_from_uint64(&mut raw, val.as_ptr()) };
+    //     unsafe { blst_fr_from_scalar(&mut out, &raw) };
+    //
+    //     Scalar(out)
+    // }
+
     /// Converts from a scalar to an integer represented in little endian
     pub fn to_raw(&self) -> [u64; 4] {
         let mut out = [0u64; 4];

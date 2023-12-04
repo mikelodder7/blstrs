@@ -136,6 +136,22 @@ impl PartialEq for G1Affine {
     }
 }
 
+impl TryFrom<Vec<u8>> for G1Affine {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+            format!(
+                "Invalid number of bytes for G1Affine, expected {}, found {}",
+                COMPRESSED_SIZE,
+                value.len()
+            )
+        })?;
+        Option::from(G1Affine::from_compressed(&tmp))
+            .ok_or("Invalid bytes for G1Affine".to_string())
+    }
+}
+
 impl Neg for &G1Projective {
     type Output = G1Projective;
 
@@ -930,6 +946,22 @@ impl UncompressedEncoding for G1Affine {
     }
 }
 
+impl TryFrom<Vec<u8>> for G1Projective {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+            format!(
+                "Invalid number of bytes for G1Projective, expected {}, found {}",
+                COMPRESSED_SIZE,
+                value.len()
+            )
+        })?;
+        Option::from(G1Projective::from_compressed(&tmp))
+            .ok_or("Invalid bytes for G1Projective".to_string())
+    }
+}
+
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 pub struct G1Uncompressed([u8; UNCOMPRESSED_SIZE]);
@@ -939,6 +971,27 @@ encoded_point_delegations!(G1Uncompressed);
 impl Default for G1Uncompressed {
     fn default() -> Self {
         G1Uncompressed([0u8; UNCOMPRESSED_SIZE])
+    }
+}
+
+impl ConstantTimeEq for G1Uncompressed {
+    fn ct_eq(&self, other: &Self) -> Choice {
+        self.0.ct_eq(&other.0)
+    }
+}
+
+impl TryFrom<Vec<u8>> for G1Uncompressed {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let tmp = <[u8; UNCOMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+            format!(
+                "Invalid number of bytes for G1Uncompressed, expected {}, found {}",
+                UNCOMPRESSED_SIZE,
+                value.len()
+            )
+        })?;
+        Ok(Self(tmp))
     }
 }
 
@@ -957,6 +1010,27 @@ encoded_point_delegations!(G1Compressed);
 impl Default for G1Compressed {
     fn default() -> Self {
         G1Compressed([0u8; COMPRESSED_SIZE])
+    }
+}
+
+impl ConstantTimeEq for G1Compressed {
+    fn ct_eq(&self, other: &Self) -> Choice {
+        self.0.ct_eq(&other.0)
+    }
+}
+
+impl TryFrom<Vec<u8>> for G1Compressed {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+            format!(
+                "Invalid number of bytes for G1Compressed, expected {}, found {}",
+                COMPRESSED_SIZE,
+                value.len()
+            )
+        })?;
+        Ok(Self(tmp))
     }
 }
 

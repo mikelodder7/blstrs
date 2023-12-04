@@ -123,6 +123,22 @@ impl PartialEq for G2Affine {
     }
 }
 
+impl TryFrom<Vec<u8>> for G2Affine {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+            format!(
+                "Invalid number of bytes for G2Affine, expected {}, found {}",
+                COMPRESSED_SIZE,
+                value.len()
+            )
+        })?;
+        Option::from(G2Affine::from_compressed(&tmp))
+            .ok_or("Invalid bytes for G2Affine".to_string())
+    }
+}
+
 impl Neg for &G2Projective {
     type Output = G2Projective;
 
@@ -901,6 +917,22 @@ impl UncompressedEncoding for G2Affine {
     }
 }
 
+impl TryFrom<Vec<u8>> for G2Projective {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+            format!(
+                "Invalid number of bytes for G2Projective, expected {}, found {}",
+                COMPRESSED_SIZE,
+                value.len()
+            )
+        })?;
+        Option::from(G2Projective::from_compressed(&tmp))
+            .ok_or("Invalid bytes for G2Projective".to_string())
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct G2Prepared {
     pub(crate) lines: Vec<blst_fp6>,
@@ -952,6 +984,21 @@ impl Default for G2Uncompressed {
     }
 }
 
+impl TryFrom<Vec<u8>> for G2Uncompressed {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let tmp = <[u8; UNCOMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+            format!(
+                "Invalid number of bytes for G2Uncompressed, expected {}, found {}",
+                UNCOMPRESSED_SIZE,
+                value.len()
+            )
+        })?;
+        Ok(Self(tmp))
+    }
+}
+
 impl fmt::Debug for G2Uncompressed {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
         self.0[..].fmt(formatter)
@@ -967,6 +1014,21 @@ encoded_point_delegations!(G2Compressed);
 impl Default for G2Compressed {
     fn default() -> Self {
         G2Compressed([0u8; COMPRESSED_SIZE])
+    }
+}
+
+impl TryFrom<Vec<u8>> for G2Compressed {
+    type Error = String;
+
+    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+            format!(
+                "Invalid number of bytes for G2Compressed, expected {}, found {}",
+                COMPRESSED_SIZE,
+                value.len()
+            )
+        })?;
+        Ok(Self(tmp))
     }
 }
 

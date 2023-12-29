@@ -136,21 +136,20 @@ impl PartialEq for G1Affine {
     }
 }
 
-impl TryFrom<Vec<u8>> for G1Affine {
-    type Error = String;
-
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+impl_from_bytes!(
+    G1Affine,
+    |p: &G1Affine| p.to_compressed(),
+    |arr: &[u8]| {
+        let tmp = <[u8; G1Affine::COMPRESSED_BYTES]>::try_from(arr).map_err(|_| {
             format!(
                 "Invalid number of bytes for G1Affine, expected {}, found {}",
-                COMPRESSED_SIZE,
-                value.len()
+                G1Affine::COMPRESSED_BYTES,
+                arr.len()
             )
         })?;
-        Option::from(G1Affine::from_compressed(&tmp))
-            .ok_or("Invalid bytes for G1Affine".to_string())
+        Ok::<CtOption<G1Affine>, String>(G1Affine::from_compressed(&tmp))
     }
-}
+);
 
 impl Neg for &G1Projective {
     type Output = G1Projective;
@@ -946,21 +945,20 @@ impl UncompressedEncoding for G1Affine {
     }
 }
 
-impl TryFrom<Vec<u8>> for G1Projective {
-    type Error = String;
-
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+impl_from_bytes!(
+    G1Projective,
+    |p: &G1Projective| p.to_compressed(),
+    |arr: &[u8]| {
+        let tmp = <[u8; G1Projective::COMPRESSED_BYTES]>::try_from(arr).map_err(|_| {
             format!(
                 "Invalid number of bytes for G1Projective, expected {}, found {}",
-                COMPRESSED_SIZE,
-                value.len()
+                G1Projective::COMPRESSED_BYTES,
+                arr.len()
             )
         })?;
-        Option::from(G1Projective::from_compressed(&tmp))
-            .ok_or("Invalid bytes for G1Projective".to_string())
+        Ok::<CtOption<G1Projective>, String>(G1Projective::from_compressed(&tmp))
     }
-}
+);
 
 #[derive(Copy, Clone)]
 #[repr(transparent)]
@@ -980,20 +978,16 @@ impl ConstantTimeEq for G1Uncompressed {
     }
 }
 
-impl TryFrom<Vec<u8>> for G1Uncompressed {
-    type Error = String;
-
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let tmp = <[u8; UNCOMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
-            format!(
-                "Invalid number of bytes for G1Uncompressed, expected {}, found {}",
-                UNCOMPRESSED_SIZE,
-                value.len()
-            )
-        })?;
-        Ok(Self(tmp))
-    }
-}
+impl_from_bytes!(G1Uncompressed, |p: &G1Uncompressed| p.0, |arr: &[u8]| {
+    let tmp = <[u8; G1Projective::UNCOMPRESSED_BYTES]>::try_from(arr).map_err(|_| {
+        format!(
+            "Invalid number of bytes for G1Uncompressed, expected {}, found {}",
+            G1Projective::UNCOMPRESSED_BYTES,
+            arr.len()
+        )
+    })?;
+    Ok::<CtOption<G1Uncompressed>, String>(CtOption::new(G1Uncompressed(tmp), Choice::from(1u8)))
+});
 
 impl fmt::Debug for G1Uncompressed {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
@@ -1019,20 +1013,16 @@ impl ConstantTimeEq for G1Compressed {
     }
 }
 
-impl TryFrom<Vec<u8>> for G1Compressed {
-    type Error = String;
-
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
-            format!(
-                "Invalid number of bytes for G1Compressed, expected {}, found {}",
-                COMPRESSED_SIZE,
-                value.len()
-            )
-        })?;
-        Ok(Self(tmp))
-    }
-}
+impl_from_bytes!(G1Compressed, |p: &G1Compressed| p.0, |arr: &[u8]| {
+    let tmp = <[u8; G1Projective::COMPRESSED_BYTES]>::try_from(arr).map_err(|_| {
+        format!(
+            "Invalid number of bytes for G1Compressed, expected {}, found {}",
+            G1Projective::COMPRESSED_BYTES,
+            arr.len()
+        )
+    })?;
+    Ok::<CtOption<G1Compressed>, String>(CtOption::new(G1Compressed(tmp), Choice::from(1u8)))
+});
 
 impl fmt::Debug for G1Compressed {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {

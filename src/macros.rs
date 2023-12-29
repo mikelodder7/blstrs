@@ -370,3 +370,52 @@ macro_rules! impl_pippenger_sum_of_products {
         }
     };
 }
+
+macro_rules! impl_from_bytes {
+    ($name:ident, $tobytesfunc:expr, $frombytesfunc:expr) => {
+        impl From<$name> for Vec<u8> {
+            fn from(value: $name) -> Self {
+                Self::from(&value)
+            }
+        }
+
+        impl From<&$name> for Vec<u8> {
+            fn from(value: &$name) -> Self {
+                $tobytesfunc(value).to_vec()
+            }
+        }
+
+        impl TryFrom<Vec<u8>> for $name {
+            type Error = String;
+
+            fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
+                Self::try_from(value.as_slice())
+            }
+        }
+
+        impl TryFrom<&Vec<u8>> for $name {
+            type Error = String;
+
+            fn try_from(value: &Vec<u8>) -> Result<Self, Self::Error> {
+                Self::try_from(value.as_slice())
+            }
+        }
+
+        impl TryFrom<Box<[u8]>> for $name {
+            type Error = String;
+
+            fn try_from(value: Box<[u8]>) -> Result<Self, Self::Error> {
+                Self::try_from(value.as_ref())
+            }
+        }
+
+        impl TryFrom<&[u8]> for $name {
+            type Error = String;
+
+            fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+                Option::<$name>::from($frombytesfunc(value)?)
+                    .ok_or_else(|| format!("Invalid bytes for {}", stringify!($name)))
+            }
+        }
+    };
+}

@@ -123,21 +123,20 @@ impl PartialEq for G2Affine {
     }
 }
 
-impl TryFrom<Vec<u8>> for G2Affine {
-    type Error = String;
-
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+impl_from_bytes!(
+    G2Affine,
+    |p: &G2Affine| p.to_compressed(),
+    |arr: &[u8]| {
+        let tmp = <[u8; G2Affine::COMPRESSED_BYTES]>::try_from(arr).map_err(|_| {
             format!(
-                "Invalid number of bytes for G2Affine, expected {}, found {}",
-                COMPRESSED_SIZE,
-                value.len()
+                "Invalid number of bytes for G1Affine, expected {}, found {}",
+                G2Affine::COMPRESSED_BYTES,
+                arr.len()
             )
         })?;
-        Option::from(G2Affine::from_compressed(&tmp))
-            .ok_or("Invalid bytes for G2Affine".to_string())
+        Ok::<CtOption<G2Affine>, String>(G2Affine::from_compressed(&tmp))
     }
-}
+);
 
 impl Neg for &G2Projective {
     type Output = G2Projective;
@@ -917,21 +916,20 @@ impl UncompressedEncoding for G2Affine {
     }
 }
 
-impl TryFrom<Vec<u8>> for G2Projective {
-    type Error = String;
-
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
+impl_from_bytes!(
+    G2Projective,
+    |p: &G2Projective| p.to_compressed(),
+    |arr: &[u8]| {
+        let tmp = <[u8; G2Projective::COMPRESSED_BYTES]>::try_from(arr).map_err(|_| {
             format!(
                 "Invalid number of bytes for G2Projective, expected {}, found {}",
-                COMPRESSED_SIZE,
-                value.len()
+                G2Projective::COMPRESSED_BYTES,
+                arr.len()
             )
         })?;
-        Option::from(G2Projective::from_compressed(&tmp))
-            .ok_or("Invalid bytes for G2Projective".to_string())
+        Ok::<CtOption<G2Projective>, String>(G2Projective::from_compressed(&tmp))
     }
-}
+);
 
 #[derive(Clone, Debug)]
 pub struct G2Prepared {
@@ -984,20 +982,16 @@ impl Default for G2Uncompressed {
     }
 }
 
-impl TryFrom<Vec<u8>> for G2Uncompressed {
-    type Error = String;
-
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let tmp = <[u8; UNCOMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
-            format!(
-                "Invalid number of bytes for G2Uncompressed, expected {}, found {}",
-                UNCOMPRESSED_SIZE,
-                value.len()
-            )
-        })?;
-        Ok(Self(tmp))
-    }
-}
+impl_from_bytes!(G2Uncompressed, |p: &G2Uncompressed| p.0, |arr: &[u8]| {
+    let tmp = <[u8; G2Affine::UNCOMPRESSED_BYTES]>::try_from(arr).map_err(|_| {
+        format!(
+            "Invalid number of bytes for G2Uncompressed, expected {}, found {}",
+            G2Affine::UNCOMPRESSED_BYTES,
+            arr.len()
+        )
+    })?;
+    Ok::<CtOption<G2Uncompressed>, String>(CtOption::new(G2Uncompressed(tmp), Choice::from(1u8)))
+});
 
 impl fmt::Debug for G2Uncompressed {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
@@ -1017,20 +1011,16 @@ impl Default for G2Compressed {
     }
 }
 
-impl TryFrom<Vec<u8>> for G2Compressed {
-    type Error = String;
-
-    fn try_from(value: Vec<u8>) -> Result<Self, Self::Error> {
-        let tmp = <[u8; COMPRESSED_SIZE]>::try_from(value.as_slice()).map_err(|_| {
-            format!(
-                "Invalid number of bytes for G2Compressed, expected {}, found {}",
-                COMPRESSED_SIZE,
-                value.len()
-            )
-        })?;
-        Ok(Self(tmp))
-    }
-}
+impl_from_bytes!(G2Compressed, |p: &G2Compressed| p.0, |arr: &[u8]| {
+    let tmp = <[u8; G2Affine::COMPRESSED_BYTES]>::try_from(arr).map_err(|_| {
+        format!(
+            "Invalid number of bytes for G2Compressed, expected {}, found {}",
+            G2Affine::COMPRESSED_BYTES,
+            arr.len()
+        )
+    })?;
+    Ok::<CtOption<G2Compressed>, String>(CtOption::new(G2Compressed(tmp), Choice::from(1u8)))
+});
 
 impl fmt::Debug for G2Compressed {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {

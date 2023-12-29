@@ -480,6 +480,19 @@ impl subtle::ConditionallySelectable for Gt {
     }
 }
 
+impl_from_bytes!(Gt, |p: &Gt| p.to_bytes().0, |arr: &[u8]| {
+    if arr.len() != Gt::BYTES {
+        return Err(format!(
+            "Invalid number of bytes for Gt, expected {}, found {}",
+            Gt::BYTES,
+            arr.len()
+        ));
+    }
+    let mut buf = GtRepr::default();
+    buf.0.copy_from_slice(arr);
+    Ok(Gt::from_bytes(&buf))
+});
+
 /// Compressed representation of `Fp12`.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Default)]
 #[repr(transparent)]
@@ -506,6 +519,11 @@ impl Gt {
 
     pub fn product(a: &Self, b: &Self) -> Self {
         Self(a.0.mul(b.0))
+    }
+
+    /// Invert this element.
+    pub fn invert(&self) -> CtOption<Self> {
+        self.0.invert().map(Self)
     }
 }
 

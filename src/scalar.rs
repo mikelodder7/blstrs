@@ -865,6 +865,17 @@ impl Reduce<U512> for Scalar {
     }
 }
 
+impl_from_bytes!(Scalar, |s: &Scalar| s.to_be_bytes(), |arr: &[u8]| {
+    let tmp: [u8; 32] = arr.try_into().map_err(|_| {
+        format!(
+            "Invalid number of bytes for Scalar, expected {}, found {}",
+            Scalar::BYTES,
+            arr.len()
+        )
+    })?;
+    Ok::<CtOption<Scalar>, String>(Scalar::from_be_bytes(&tmp))
+});
+
 impl Scalar {
     /// Bytes to represent this field
     pub const BYTES: usize = 32;

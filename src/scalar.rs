@@ -466,8 +466,14 @@ impl PrimeField for Scalar {
     type Repr = [u8; 32];
 
     /// Converts a little-endian non-Montgomery form `repr` into a Montgomery form `Scalar`.
-    fn from_repr(repr: Self::Repr) -> CtOption<Self> {
-        Self::from_le_bytes(&repr)
+    fn from_repr(mut repr: Self::Repr) -> CtOption<Self> {
+        Self::from_le_bytes(&repr).or_else(|| {
+            repr.reverse();
+            let mut bytes = [0u8; 48];
+            bytes[16..].copy_from_slice(&repr);
+            let s = Self::from_okm(&bytes);
+            CtOption::new(s, !s.is_zero())
+        })
     }
     fn from_repr_vartime(repr: Self::Repr) -> Option<Self> {
         let bytes_u64 = u64s_from_bytes(&repr);
@@ -2150,8 +2156,8 @@ mod tests {
         ));
 
         // Modulus should not be in the field
-        // assert!(bool::from(Scalar::from_repr(Scalar::char()).is_none()));
-        // assert!(Scalar::from_repr_vartime(Scalar::char()).is_none());
+        assert!(bool::from(Scalar::from_repr(Scalar::char()).is_none()));
+        assert!(Scalar::from_repr_vartime(Scalar::char()).is_none());
 
         // Multiply some arbitrary representations to see if the result is as expected.
         let mut a = Scalar::from_raw(&[

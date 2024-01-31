@@ -499,6 +499,8 @@ impl_from_bytes!(Gt, |p: &Gt| p.to_bytes().0, |arr: &[u8]| {
 pub struct GtCompressed(pub(crate) Fp6);
 
 impl Gt {
+    /// The identity element
+    pub const IDENTITY: Self = Self(Fp12::ONE);
     /// The number of bytes needed to represent this element.
     pub const BYTES: usize = 576;
     /// Compress this point. Returns `None` if the element is not in the cyclomtomic subgroup.

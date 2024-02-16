@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://book.async.rs/overview
 
 ## [Unreleased]
 
+## [0.8.15] - 2024-02-16
+
+- Match bls12_381_plus methods
+- Update dependencies
+
 ## [0.8.9] - 2023-10-18
 
 - Match bls12_381_plus methods

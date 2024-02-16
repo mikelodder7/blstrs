@@ -369,24 +369,11 @@ impl_add_sub_assign!(Scalar);
 impl_mul!(Scalar);
 impl_mul_assign!(Scalar);
 
-/// The number of bits we should "shave" from a randomly sampled reputation.
-const REPR_SHAVE_BITS: usize = 256 - Scalar::NUM_BITS as usize;
-
 impl Field for Scalar {
     fn random(mut rng: impl RngCore) -> Self {
-        loop {
-            let mut raw = [0u64; 4];
-            for int in raw.iter_mut() {
-                *int = rng.next_u64();
-            }
-
-            // Mask away the unused most-significant bits.
-            raw[3] &= 0xffffffffffffffff >> REPR_SHAVE_BITS;
-
-            if let Some(scalar) = Scalar::from_raw(&raw).into() {
-                return scalar;
-            }
-        }
+        let mut raw = [0u8; 48];
+        rng.fill_bytes(&mut raw);
+        Self::from_okm(&raw)
     }
 
     const ZERO: Self = ZERO;

@@ -9,7 +9,7 @@ license = "MIT/Apache-2.0"
 name = "blstrs_plus"
 readme = "README.md"
 repository = "https://github.com/mikelodder7/blstrs"
-version = "0.8.14"
+version = "0.8.15"
 
 [package.metadata.docs.rs]
 rustdoc-args = [ "--html-in-header", "katex-header.html" ]
@@ -23,8 +23,8 @@ group = { version = "0.13", features = ["tests"] }
 pairing_lib = { version = "0.23", package = "pairing" }
 rand_core = "0.6"
 serde = { version = "1.0", features = ["derive"], optional = true }
-subtle = "2.4"
-zeroize = { version = "1.6", features = ["zeroize_derive"] }
+subtle = "2.5"
+zeroize = { version = "1", features = ["zeroize_derive"] }
 
 [dev-dependencies]
 bls12_381_plus = "0.8"

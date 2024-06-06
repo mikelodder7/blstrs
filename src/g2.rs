@@ -1,11 +1,15 @@
 //! An implementation of the $\mathbb{G}_2$ group of BLS12-381.
 
+#[cfg(feature = "ark")]
+mod ark;
+
 use core::{
     borrow::Borrow,
     fmt,
     iter::Sum,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+use std::hash::Hash;
 
 use blst::*;
 use elliptic_curve::consts::U96;
@@ -21,6 +25,7 @@ use group::{
 };
 use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
+use zeroize::Zeroize;
 
 use crate::{fp2::Fp2, util, Bls12, Engine, G1Affine, Gt, PairingCurveAffine, Scalar};
 
@@ -507,6 +512,28 @@ impl G2Affine {
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 pub struct G2Projective(pub(crate) blst_p2);
+
+impl Hash for G2Projective {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.x.fp[0].l.hash(state);
+        self.0.x.fp[1].l.hash(state);
+        self.0.y.fp[0].l.hash(state);
+        self.0.y.fp[1].l.hash(state);
+        self.0.z.fp[0].l.hash(state);
+        self.0.z.fp[1].l.hash(state);
+    }
+}
+
+impl Zeroize for G2Projective {
+    fn zeroize(&mut self) {
+        self.0.x.fp[0].l.zeroize();
+        self.0.x.fp[1].l.zeroize();
+        self.0.y.fp[0].l.zeroize();
+        self.0.y.fp[1].l.zeroize();
+        self.0.z.fp[0].l.zeroize();
+        self.0.z.fp[1].l.zeroize();
+    }
+}
 
 impl fmt::Debug for G2Projective {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

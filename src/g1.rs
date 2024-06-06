@@ -1,5 +1,8 @@
 //! An implementation of the $\mathbb{G}_1$ group of BLS12-381.
 
+#[cfg(feature = "ark")]
+mod ark;
+
 use core::{
     borrow::Borrow,
     fmt,
@@ -10,6 +13,7 @@ use elliptic_curve::consts::U48;
 use elliptic_curve::generic_array::GenericArray;
 use elliptic_curve::ops::{LinearCombination, MulByGenerator};
 use elliptic_curve::point::AffineCoordinates;
+use std::hash::Hash;
 use std::io::Read;
 
 use blst::*;
@@ -22,6 +26,7 @@ use group::{
 };
 use rand_core::RngCore;
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
+use zeroize::Zeroize;
 
 use crate::{fp::Fp, util, Bls12, Engine, G2Affine, Gt, PairingCurveAffine, Scalar};
 
@@ -531,6 +536,22 @@ impl G1Affine {
 #[derive(Copy, Clone)]
 #[repr(transparent)]
 pub struct G1Projective(pub(crate) blst_p1);
+
+impl Hash for G1Projective {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.x.l.hash(state);
+        self.0.y.l.hash(state);
+        self.0.z.l.hash(state);
+    }
+}
+
+impl Zeroize for G1Projective {
+    fn zeroize(&mut self) {
+        self.0.x.l.zeroize();
+        self.0.y.l.zeroize();
+        self.0.z.l.zeroize();
+    }
+}
 
 impl fmt::Debug for G1Projective {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

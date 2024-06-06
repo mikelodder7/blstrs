@@ -1,6 +1,9 @@
 //! An implementation of the BLS12-381 scalar field $\mathbb{F}_q$
 //! where `q = 0x73eda753299d7d483339d80809a1d80553bda402fffe5bfeffffffff00000001`
 
+#[cfg(feature = "ark")]
+mod ark;
+
 use core::{
     borrow::Borrow,
     cmp,
@@ -9,6 +12,7 @@ use core::{
     iter::{Product, Sum},
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+use std::hash::Hash;
 
 use crate::{util, Bls12381G1};
 use blst::*;
@@ -20,6 +24,7 @@ use elliptic_curve::scalar::{FromUintUnchecked, IsHigh};
 use elliptic_curve::ScalarPrimitive;
 use ff::{Field, FieldBits, PrimeField, PrimeFieldBits};
 use rand_core::RngCore;
+use std::ops::{Div, DivAssign};
 use subtle::{Choice, ConditionallySelectable, ConstantTimeEq, CtOption};
 use zeroize::DefaultIsZeroes;
 
@@ -30,6 +35,12 @@ use zeroize::DefaultIsZeroes;
 #[derive(Default, Clone, Copy)]
 #[repr(transparent)]
 pub struct Scalar(pub(crate) blst_fr);
+
+impl Hash for Scalar {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.l.hash(state);
+    }
+}
 
 // GENERATOR = 7 (multiplicative generator of r-1 order, that is also quadratic nonresidue)
 const GENERATOR: Scalar = Scalar(blst_fr {
@@ -211,6 +222,15 @@ impl From<blst_fr> for Scalar {
     }
 }
 
+#[cfg(any(target_pointer_width = "64", feature = "ark"))]
+impl From<u128> for Scalar {
+    fn from(val: u128) -> Scalar {
+        let mut repr = [0u8; 32];
+        repr[..16].copy_from_slice(&val.to_le_bytes());
+        Scalar::from_le_bytes(&repr).unwrap()
+    }
+}
+
 impl From<u64> for Scalar {
     fn from(val: u64) -> Scalar {
         let mut repr = [0u8; 32];
@@ -224,6 +244,32 @@ impl From<u32> for Scalar {
         let mut repr = [0u8; 32];
         repr[..4].copy_from_slice(&val.to_le_bytes());
         Scalar::from_le_bytes(&repr).unwrap()
+    }
+}
+
+impl From<u16> for Scalar {
+    fn from(value: u16) -> Self {
+        let mut repr = [0u8; 32];
+        repr[..2].copy_from_slice(&value.to_le_bytes());
+        Scalar::from_le_bytes(&repr).unwrap()
+    }
+}
+
+impl From<u8> for Scalar {
+    fn from(value: u8) -> Self {
+        let mut repr = [0u8; 32];
+        repr[0] = value;
+        Scalar::from_le_bytes(&repr).unwrap()
+    }
+}
+
+impl From<bool> for Scalar {
+    fn from(value: bool) -> Self {
+        if value {
+            Scalar::ONE
+        } else {
+            Scalar::ZERO
+        }
     }
 }
 
@@ -368,6 +414,50 @@ impl_add_sub!(Scalar);
 impl_add_sub_assign!(Scalar);
 impl_mul!(Scalar);
 impl_mul_assign!(Scalar);
+
+impl<'a, 'b> Div<&'b Scalar> for &'a Scalar {
+    type Output = Scalar;
+
+    fn div(self, rhs: &'b Scalar) -> Scalar {
+        self.mul(&rhs.invert().expect("a non-zero scalar"))
+    }
+}
+
+impl Div<&Scalar> for Scalar {
+    type Output = Scalar;
+
+    fn div(self, rhs: &Scalar) -> Scalar {
+        &self / rhs
+    }
+}
+
+impl Div<Scalar> for &Scalar {
+    type Output = Scalar;
+
+    fn div(self, rhs: Scalar) -> Scalar {
+        self / &rhs
+    }
+}
+
+impl Div for Scalar {
+    type Output = Scalar;
+
+    fn div(self, rhs: Self) -> Self {
+        &self / &rhs
+    }
+}
+
+impl DivAssign<&Scalar> for Scalar {
+    fn div_assign(&mut self, rhs: &Scalar) {
+        *self = &*self / rhs;
+    }
+}
+
+impl DivAssign for Scalar {
+    fn div_assign(&mut self, rhs: Scalar) {
+        *self = &*self / &rhs;
+    }
+}
 
 impl Field for Scalar {
     fn random(mut rng: impl RngCore) -> Self {
@@ -736,7 +826,7 @@ impl FromUintUnchecked for Scalar {
         #[cfg(target_pointer_width = "64")]
         {
             out.copy_from_slice(&uint.as_words()[..4]);
-            Scalar::from_raw(&out).unwrap()
+            Scalar::from_raw(out).unwrap()
         }
         #[cfg(target_pointer_width = "32")]
         {
@@ -748,7 +838,7 @@ impl FromUintUnchecked for Scalar {
                 i += 2;
                 j += 1;
             }
-            Scalar::from_raw(&out).unwrap()
+            Scalar::from_raw(out).unwrap()
         }
     }
 }
@@ -924,7 +1014,7 @@ impl Scalar {
 
     /// Converts from an integer represented in little endian
     /// into its (congruent) `Scalar` representation.
-    pub fn from_raw(bytes: &[u64; 4]) -> CtOption<Self> {
+    pub fn from_raw(bytes: [u64; 4]) -> CtOption<Self> {
         let mut raw = blst_scalar::default();
         let mut out = blst_fr::default();
 
@@ -937,7 +1027,7 @@ impl Scalar {
 
     /// Converts from an integer represented in little endian
     /// into its (congruent) `Scalar` representation.
-    pub const fn from_raw_unchecked(val: &[u64; 4]) -> Self {
+    pub const fn from_raw_unchecked(val: [u64; 4]) -> Self {
         Self(blst_fr {
             l: [val[0], val[1], val[2], val[3]],
         })
@@ -1530,7 +1620,7 @@ mod tests {
 
     #[test]
     fn test_double() {
-        let a = Scalar::from_raw(&[
+        let a = Scalar::from_raw([
             0x1fff3231233ffffd,
             0x4884b7fa00034802,
             0x998c4fefecbc4ff3,
@@ -1554,28 +1644,28 @@ mod tests {
         }
 
         assert_equality(
-            Scalar::from_raw(&[9999, 9999, 9999, 9999]).unwrap(),
-            Scalar::from_raw(&[9999, 9999, 9999, 9999]).unwrap(),
+            Scalar::from_raw([9999, 9999, 9999, 9999]).unwrap(),
+            Scalar::from_raw([9999, 9999, 9999, 9999]).unwrap(),
         );
         assert_equality(
-            Scalar::from_raw(&[9999, 9998, 9999, 9999]).unwrap(),
-            Scalar::from_raw(&[9999, 9998, 9999, 9999]).unwrap(),
+            Scalar::from_raw([9999, 9998, 9999, 9999]).unwrap(),
+            Scalar::from_raw([9999, 9998, 9999, 9999]).unwrap(),
         );
         assert_equality(
-            Scalar::from_raw(&[9999, 9999, 9999, 9997]).unwrap(),
-            Scalar::from_raw(&[9999, 9999, 9999, 9997]).unwrap(),
+            Scalar::from_raw([9999, 9999, 9999, 9997]).unwrap(),
+            Scalar::from_raw([9999, 9999, 9999, 9997]).unwrap(),
         );
         assert_lt(
-            Scalar::from_raw(&[9999, 9997, 9999, 9998]).unwrap(),
-            Scalar::from_raw(&[9999, 9997, 9999, 9999]).unwrap(),
+            Scalar::from_raw([9999, 9997, 9999, 9998]).unwrap(),
+            Scalar::from_raw([9999, 9997, 9999, 9999]).unwrap(),
         );
         assert_lt(
-            Scalar::from_raw(&[9999, 9997, 9998, 9999]).unwrap(),
-            Scalar::from_raw(&[9999, 9997, 9999, 9999]).unwrap(),
+            Scalar::from_raw([9999, 9997, 9998, 9999]).unwrap(),
+            Scalar::from_raw([9999, 9997, 9999, 9999]).unwrap(),
         );
         assert_lt(
-            Scalar::from_raw(&[9, 9999, 9999, 9997]).unwrap(),
-            Scalar::from_raw(&[9999, 9999, 9999, 9997]).unwrap(),
+            Scalar::from_raw([9, 9999, 9999, 9997]).unwrap(),
+            Scalar::from_raw([9999, 9999, 9999, 9997]).unwrap(),
         );
     }
 
@@ -1600,7 +1690,7 @@ mod tests {
         assert!(bool::from(Scalar::from(0u64).is_zero()));
         assert!(!bool::from(Scalar::from(1u64).is_zero()));
         assert!(!bool::from(
-            Scalar::from_raw(&[0, 0, 1, 0]).unwrap().is_zero()
+            Scalar::from_raw([0, 0, 1, 0]).unwrap().is_zero()
         ));
     }
 
@@ -1624,7 +1714,7 @@ mod tests {
         assert_eq!(Scalar::ZERO.sqrt().unwrap(), Scalar::ZERO);
         assert_eq!(Scalar::ONE.sqrt().unwrap(), Scalar::ONE);
 
-        let e = Scalar::from_raw(&[
+        let e = Scalar::from_raw([
             0x0dbc5349cd5664da,
             0x8ac5b6296e3ae29d,
             0x127cb819feceaa3b,
@@ -1633,7 +1723,7 @@ mod tests {
         .unwrap();
         assert!(bool::from(e.is_quad_res()));
 
-        let e = Scalar::from_raw(&[
+        let e = Scalar::from_raw([
             0x96341aefd047c045,
             0x9b5f4254500a4d65,
             0x1ee08223b68ac240,
@@ -1970,7 +2060,7 @@ mod tests {
         // assert!(a.is_valid());
         assert_eq!(
             a.square(),
-            Scalar::from_raw(&[
+            Scalar::from_raw([
                 0xc0d698e7bde077b8,
                 0xb79a310579e76ec2,
                 0xac1da8d0a9af4e5f,
@@ -2129,7 +2219,7 @@ mod tests {
     fn test_scalar_from_into_repr() {
         // r + 1 should not be in the field
         assert!(bool::from(
-            Scalar::from_raw(&[
+            Scalar::from_raw([
                 0xffffffff00000002,
                 0x53bda402fffe5bfe,
                 0x3339d80809a1d805,
@@ -2143,21 +2233,21 @@ mod tests {
         assert!(Scalar::from_repr_vartime(Scalar::char()).is_none());
 
         // Multiply some arbitrary representations to see if the result is as expected.
-        let mut a = Scalar::from_raw(&[
+        let mut a = Scalar::from_raw([
             0x25ebe3a3ad3c0c6a,
             0x6990e39d092e817c,
             0x941f900d42f5658e,
             0x44f8a103b38a71e0,
         ])
         .unwrap();
-        let b = Scalar::from_raw(&[
+        let b = Scalar::from_raw([
             0x264e9454885e2475,
             0x46f7746bb0308370,
             0x4683ef5347411f9,
             0x58838d7f208d4492,
         ])
         .unwrap();
-        let c = Scalar::from_raw(&[
+        let c = Scalar::from_raw([
             0x48a09ab93cfc740d,
             0x3a6600fbfc7a671,
             0x838567017501d767,
@@ -2193,7 +2283,7 @@ mod tests {
         assert_eq!(
             format!(
                 "{}",
-                Scalar::from_raw(&[
+                Scalar::from_raw([
                     0xc3cae746a3b5ecc7,
                     0x185ec8eb3f5b5aee,
                     0x684499ffe4b9dd99,
@@ -2207,7 +2297,7 @@ mod tests {
         assert_eq!(
             format!(
                 "{}",
-                Scalar::from_raw(&[
+                Scalar::from_raw([
                     0x44c71298ff198106,
                     0xb0ad10817df79b6a,
                     0xd034a80a2b74132b,

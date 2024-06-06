@@ -1,3 +1,5 @@
+#[cfg(feature = "ark")]
+pub mod ark;
 pub mod engine;
 pub mod field;
 

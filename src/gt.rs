@@ -638,12 +638,12 @@ mod tests {
     fn test_gt_bilinearity() {
         use crate::Scalar;
 
-        let a = Scalar::from_raw(&[1, 2, 3, 4])
+        let a = Scalar::from_raw([1, 2, 3, 4])
             .unwrap()
             .invert()
             .unwrap()
             .square();
-        let b = Scalar::from_raw(&[5, 6, 7, 8])
+        let b = Scalar::from_raw([5, 6, 7, 8])
             .unwrap()
             .invert()
             .unwrap()
@@ -687,7 +687,7 @@ mod tests {
 
         let a2 = G1Affine::from(
             G1Affine::generator()
-                * Scalar::from_raw(&[1, 2, 3, 4])
+                * Scalar::from_raw([1, 2, 3, 4])
                     .unwrap()
                     .invert()
                     .unwrap()
@@ -695,7 +695,7 @@ mod tests {
         );
         let b2 = G2Affine::from(
             G2Affine::generator()
-                * Scalar::from_raw(&[4, 2, 2, 4])
+                * Scalar::from_raw([4, 2, 2, 4])
                     .unwrap()
                     .invert()
                     .unwrap()
@@ -705,7 +705,7 @@ mod tests {
         let a3 = G1Affine::identity();
         let b3 = G2Affine::from(
             G2Affine::generator()
-                * Scalar::from_raw(&[9, 2, 2, 4])
+                * Scalar::from_raw([9, 2, 2, 4])
                     .unwrap()
                     .invert()
                     .unwrap()
@@ -714,7 +714,7 @@ mod tests {
 
         let a4 = G1Affine::from(
             G1Affine::generator()
-                * Scalar::from_raw(&[5, 5, 5, 5])
+                * Scalar::from_raw([5, 5, 5, 5])
                     .unwrap()
                     .invert()
                     .unwrap()
@@ -724,7 +724,7 @@ mod tests {
 
         let a5 = G1Affine::from(
             G1Affine::generator()
-                * Scalar::from_raw(&[323, 32, 3, 1])
+                * Scalar::from_raw([323, 32, 3, 1])
                     .unwrap()
                     .invert()
                     .unwrap()
@@ -732,7 +732,7 @@ mod tests {
         );
         let b5 = G2Affine::from(
             G2Affine::generator()
-                * Scalar::from_raw(&[4, 2, 2, 9099])
+                * Scalar::from_raw([4, 2, 2, 9099])
                     .unwrap()
                     .invert()
                     .unwrap()
@@ -852,12 +852,12 @@ mod tests {
 
         // test from Scalars, too
 
-        let a = Scalar::from_raw(&[1u64, 2, 3, 4])
+        let a = Scalar::from_raw([1u64, 2, 3, 4])
             .unwrap()
             .invert()
             .unwrap()
             .square();
-        let b = Scalar::from_raw(&[5u64, 6, 7, 8])
+        let b = Scalar::from_raw([5u64, 6, 7, 8])
             .unwrap()
             .invert()
             .unwrap()
@@ -867,12 +867,12 @@ mod tests {
         let e = G2Affine::from(G2Affine::generator() * b);
         let f = pairing(&d, &e);
 
-        let g = Scalar::from_raw(&[4u64, 2, 3, 4])
+        let g = Scalar::from_raw([4u64, 2, 3, 4])
             .unwrap()
             .invert()
             .unwrap()
             .square();
-        let h = Scalar::from_raw(&[8u64, 6, 7, 8])
+        let h = Scalar::from_raw([8u64, 6, 7, 8])
             .unwrap()
             .invert()
             .unwrap()

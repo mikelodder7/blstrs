@@ -391,8 +391,7 @@ impl G1Affine {
             .and_then(|p| CtOption::new(p, p.is_on_curve() & p.is_torsion_free()))
     }
 
-    /// Attempts to deserialize a uncompressed element hex string. See [`notes::serialization`](crate::notes::serialization)
-    /// for details about how group elements are serialized.
+    /// Attempts to deserialize a uncompressed element hex string.
     pub fn from_uncompressed_hex(hex: &str) -> CtOption<Self> {
         let mut bytes = [0u8; UNCOMPRESSED_SIZE];
         util::decode_hex_into_slice(&mut bytes, hex.as_bytes());
@@ -417,8 +416,7 @@ impl G1Affine {
             .and_then(|p| CtOption::new(p, p.is_on_curve() & p.is_torsion_free()))
     }
 
-    /// Attempts to deserialize a compressed element hex string. See [`notes::serialization`](crate::notes::serialization)
-    /// for details about how group elements are serialized.
+    /// Attempts to deserialize a compressed element hex string.
     pub fn from_compressed_hex(hex: &str) -> CtOption<Self> {
         let mut bytes = [0u8; COMPRESSED_SIZE];
         util::decode_hex_into_slice(&mut bytes, hex.as_bytes());

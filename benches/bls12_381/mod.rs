@@ -10,7 +10,7 @@ mod scalar;
 use rand_core::SeedableRng;
 use rand_xorshift::XorShiftRng;
 
-use blstrs::*;
+use blstrs_plus::*;
 use group::{Curve, Group};
 use pairing_lib::{Engine, MillerLoopResult, MultiMillerLoop};
 
@@ -148,7 +148,7 @@ fn bench_g1_multi_exp(b: &mut ::test::Bencher) {
     let points: Vec<G1Projective> = (0..SIZE).map(|_| G1Projective::random(&mut rng)).collect();
     let scalars: Vec<Scalar> = (0..SIZE).map(|_| Scalar::random(&mut rng)).collect();
 
-    b.iter(|| G1Projective::multi_exp(points.as_slice(), scalars.as_slice()));
+    b.iter(|| G1Projective::sum_of_products(points.as_slice(), scalars.as_slice()));
 }
 
 #[bench]
@@ -185,5 +185,5 @@ fn bench_g2_multi_exp(b: &mut ::test::Bencher) {
     let points: Vec<G2Projective> = (0..SIZE).map(|_| G2Projective::random(&mut rng)).collect();
     let scalars: Vec<Scalar> = (0..SIZE).map(|_| Scalar::random(&mut rng)).collect();
 
-    b.iter(|| G2Projective::multi_exp(points.as_slice(), scalars.as_slice()));
+    b.iter(|| G2Projective::sum_of_products(points.as_slice(), scalars.as_slice()));
 }

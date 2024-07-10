@@ -2,7 +2,7 @@ mod g1 {
     use rand_core::SeedableRng;
     use rand_xorshift::XorShiftRng;
 
-    use blstrs::*;
+    use blstrs_plus::*;
     use ff::Field;
     use group::Group;
 
@@ -87,7 +87,7 @@ mod g2 {
     use rand_core::SeedableRng;
     use rand_xorshift::XorShiftRng;
 
-    use blstrs::*;
+    use blstrs_plus::*;
     use ff::Field;
     use group::Group;
 

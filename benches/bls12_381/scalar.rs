@@ -1,7 +1,7 @@
 use rand_core::SeedableRng;
 use rand_xorshift::XorShiftRng;
 
-use blstrs::*;
+use blstrs_plus::*;
 use ff::{Field, PrimeField};
 
 #[bench]

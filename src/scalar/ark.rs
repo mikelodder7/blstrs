@@ -213,13 +213,13 @@ impl FromStr for Scalar {
     }
 }
 
-impl From<<Scalar as ArkPrimeField>::BigInt> for Scalar {
-    fn from(repr: <Scalar as ArkPrimeField>::BigInt) -> Self {
+impl From<BigInteger256> for Scalar {
+    fn from(repr: BigInteger256) -> Self {
         Self::from_bigint(repr).expect("Failed to convert from BigInt")
     }
 }
 
-impl From<Scalar> for <Scalar as ArkPrimeField>::BigInt {
+impl From<Scalar> for BigInteger256 {
     fn from(scalar: Scalar) -> Self {
         scalar.into_bigint()
     }

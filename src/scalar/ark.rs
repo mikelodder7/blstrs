@@ -197,6 +197,14 @@ impl FftField for Scalar {
         0x0af53ae352a31e64u64,
         0x5bf3adda19e9b27bu64,
     ]);
+    const SMALL_SUBGROUP_BASE: Option<u32> = Some(3);
+    const SMALL_SUBGROUP_BASE_ADICITY: Option<u32> = Some(1);
+    const LARGE_SUBGROUP_ROOT_OF_UNITY: Option<Self> = Some(Self::from_raw_unchecked([
+        0xc3bd1fc0baafea0c,
+        0x15e3d3605ecb5af5,
+        0xac35740580d62e80,
+        0x5a86e0353b85f530,
+    ]));
 }
 
 impl FromStr for Scalar {

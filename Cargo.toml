@@ -44,7 +44,7 @@ hex = "0.4"
 
 [features]
 ark = ["ark-bls12-381", "ark-ec", "ark-ff", "ark-serialize", "num-bigint", "num-traits", "rand"]
-default = ["hashing", "serde", "ark"]
+default = ["hashing", "serde"]
 hashing = ["elliptic-curve/hash2curve"]
 portable = ["blst/portable"]
 __private_bench = []

@@ -7,6 +7,7 @@ use core::{
     borrow::Borrow,
     fmt,
     iter::Sum,
+    mem::transmute,
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 use std::hash::Hash;
@@ -503,6 +504,16 @@ impl G2Affine {
     #[deprecated(since = "0.7.0", note = "Use COMPRESSED_BYTES instead")]
     pub const fn compressed_size() -> usize {
         COMPRESSED_SIZE
+    }
+
+    pub fn sum_of_products(points: &[Self], scalars: &[Scalar]) -> G2Projective {
+        let num_components = points.len().min(scalars.len());
+        let mut raw_scalars = Vec::with_capacity(num_components * 32);
+        for s in scalars {
+            raw_scalars.extend_from_slice(&s.to_le_bytes());
+        }
+        let inner_points = unsafe { transmute::<_, &[blst_p2_affine]>(points) };
+        G2Projective(inner_points.mult(&raw_scalars, 255))
     }
 }
 
@@ -1597,6 +1608,29 @@ mod tests {
         }
 
         let pippenger = G2Projective::sum_of_products(points.as_slice(), scalars.as_slice());
+
+        assert_eq!(naive, pippenger);
+    }
+
+    #[test]
+    fn test_multi_exp_affine() {
+        const SIZE: usize = 10;
+        let mut rng = XorShiftRng::from_seed([
+            0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06,
+            0xbc, 0xe5,
+        ]);
+
+        let points: Vec<G2Affine> = (0..SIZE)
+            .map(|_| G2Projective::random(&mut rng).to_affine())
+            .collect();
+        let scalars: Vec<Scalar> = (0..SIZE).map(|_| Scalar::random(&mut rng)).collect();
+
+        let mut naive = points[0] * scalars[0];
+        for i in 1..SIZE {
+            naive += points[i] * scalars[i];
+        }
+
+        let pippenger = G2Affine::sum_of_products(points.as_slice(), scalars.as_slice());
 
         assert_eq!(naive, pippenger);
     }

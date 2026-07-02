@@ -2140,6 +2140,6 @@ fn test_from_vec() {
         let res: Result<Scalar, alloc::string::String> = bytes.clone().try_into();
         assert!(res.is_ok());
         let s = res.unwrap();
-        assert_eq!(bytes, <&Scalar as Into<alloc::vec::Vec<u8>>>::into(&s));
+        assert_eq!(bytes, alloc::vec::Vec::<u8>::from(&s));
     }
 }

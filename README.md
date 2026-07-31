@@ -1,8 +1,9 @@
 # `blstrs_plus`
 
-This crate provides an implementation of the BLS12-381 pairing-friendly elliptic curve construction with hash-to-curve and multiexponentiation methods.
+This crate provides an implementation of the BLS12-381 pairing-friendly elliptic curve construction with hash-to-curve and multi-exponentiation methods.
 
 * **This implementation has not been reviewed or audited. Use at your own risk.**
+* This implementation targets Rust `1.87` or later.
 * This implementation does not require the Rust standard library.
 * All operations are constant time unless explicitly noted.
 
@@ -12,15 +13,16 @@ This crate provides an implementation of the BLS12-381 pairing-friendly elliptic
 * `groups` (on by default): Enables APIs for performing group arithmetic with G1, G2, and GT.
 * `pairings` (on by default): Enables APIs for performing pairings.
 * `alloc` (on by default): Enables APIs that require an allocator.
-* `ark`: Enables arkworks compatibility.
-* `expose-fields`: Exposes field element modules.
+* `ark`: Enables compatibility with the arkworks ecosystem and the Rust standard library.
+* `expose-fields`: Exposes the internal field modules; this also enables `groups`.
+* `std`: Enables APIs that require the Rust standard library.
 
 ## Testing
 
 Test for non-wasm32 targets:
 
 ```sh
-cargo test
+cargo test --all-features
 ```
 
 Test wasm32 targets:

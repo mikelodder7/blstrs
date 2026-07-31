@@ -2,15 +2,16 @@
 authors = ["dignifiedquire <me@dignifiedquire.com>", "Mike Lodder <redmike7@gmail.com>"]
 autobenches = false
 categories = ["cryptography", "algorithms"]
-description = "High performance implementation of BLS12 381"
+description = "High-performance implementation of BLS12-381"
 documentation = "https://docs.rs/blstrs_plus"
 edition = "2024"
 homepage = "https://docs.rs/blstrs_plus"
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 name = "blstrs_plus"
 readme = "README.md"
 repository = "https://github.com/mikelodder7/blstrs"
-version = "0.9.0-rc1"
+rust-version = "1.87"
+version = "0.9.0"
 
 [package.metadata.docs.rs]
 rustdoc-args = [ "--html-in-header", "katex-header.html" ]

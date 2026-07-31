@@ -112,7 +112,7 @@ impl MillerLoopResult {
             }
         }
         #[must_use]
-        fn cycolotomic_exp(f: Fp12) -> Fp12 {
+        fn cyclotomic_exp(f: Fp12) -> Fp12 {
             let x = BLS_X;
             let mut tmp = Fp12::ONE;
             let mut found_one = false;
@@ -146,14 +146,14 @@ impl MillerLoopResult {
                 t2 = t2.frobenius_map().frobenius_map();
                 t2 *= t1;
                 t1 = cyclotomic_square(t2).conjugate();
-                let mut t3 = cycolotomic_exp(t2);
+                let mut t3 = cyclotomic_exp(t2);
                 let mut t4 = cyclotomic_square(t3);
                 let mut t5 = t1 * t3;
-                t1 = cycolotomic_exp(t5);
-                t0 = cycolotomic_exp(t1);
-                let mut t6 = cycolotomic_exp(t0);
+                t1 = cyclotomic_exp(t5);
+                t0 = cyclotomic_exp(t1);
+                let mut t6 = cyclotomic_exp(t0);
                 t6 *= t4;
-                t4 = cycolotomic_exp(t6);
+                t4 = cyclotomic_exp(t6);
                 t5 = t5.conjugate();
                 t4 *= t5 * t2;
                 t5 = t2.conjugate();

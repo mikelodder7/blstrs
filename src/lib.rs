@@ -1,10 +1,10 @@
-//! # `bls12_381`
+//! # `blstrs_plus`
 //!
 //! This crate provides an implementation of the BLS12-381 pairing-friendly elliptic
 //! curve construction.
 //!
 //! * **This implementation has not been reviewed or audited. Use at your own risk.**
-//! * This implementation targets Rust `1.36` or later.
+//! * This implementation targets Rust `1.87` or later.
 //! * This implementation does not require the Rust standard library.
 //! * All operations are constant time unless explicitly noted.
 
@@ -92,14 +92,14 @@ use elliptic_curve_013::{
     point::PointCompression,
 };
 
-/// An engine for operations generic G1 operations
+/// An engine for generic G1 operations.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Bls12381G1;
 
 unsafe impl Send for Bls12381G1 {}
 unsafe impl Sync for Bls12381G1 {}
 
-/// An engine for operations generic G2 operations
+/// An engine for generic G2 operations.
 #[derive(Copy, Clone, Debug, Default, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Bls12381G2;
 

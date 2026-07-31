@@ -458,7 +458,7 @@ impl G1Affine {
         Self::from_compressed(&buf)
     }
 
-    /// Attempts to deserialize a uncompressed element hex string. See [`notes::serialization`](crate::notes::serialization)
+    /// Attempts to deserialize an uncompressed element hex string. See [`notes::serialization`](crate::notes::serialization)
     /// for details about how group elements are serialized.
     pub fn from_uncompressed_hex(hex: &str) -> CtOption<Self> {
         let mut buf = [0u8; Self::UNCOMPRESSED_BYTES];
@@ -1079,7 +1079,7 @@ impl G1Projective {
     impl_pippenger_sum_of_products!();
 }
 
-/// Group1 in it's compressed form
+/// A G1 point in compressed form.
 #[derive(Clone, Copy)]
 pub struct G1Compressed([u8; 48]);
 
@@ -1137,7 +1137,7 @@ impl_from_bytes!(G1Compressed, |p: &G1Compressed| p.0, |arr: &[u8]| {
     ))
 });
 
-/// Group1 in it's Uncompressed from
+/// A G1 point in uncompressed form.
 #[derive(Clone, Copy)]
 pub struct G1Uncompressed([u8; 96]);
 

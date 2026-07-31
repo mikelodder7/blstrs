@@ -1462,7 +1462,7 @@ impl Reduce<U512> for Scalar {
     }
 }
 
-#[cfg(target_pointer_width = "32")]
+#[cfg(all(target_pointer_width = "32", not(target_arch = "wasm32")))]
 fn raw_scalar_to_32bit_le_array(scalar: &Scalar, arr: &mut [u32]) {
     let raw = scalar.to_raw();
     let mut i = 0;

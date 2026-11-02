@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Removed `crypto-bigint` `0.5` ([RUSTSEC-2026-0387]) by dropping the `elliptic-curve` `0.13` dependency, and updated `crypto-bigint` `0.7` to `0.7.10`.
+
+### Breaking
+
+- Removed the `elliptic_curve_013` re-export and all `elliptic-curve` `0.13` trait impls (`Curve`, `PrimeCurve`, `FieldBytesEncoding`, `AffineCoordinates`, `MulByGenerator`, `LinearCombination`, `ScalarPrimitive`, `FromUintUnchecked`, `Reduce`, `Invert`, `IsHigh`). The `ff`/`group` `0.13` traits stay because `pairing` needs them.
+- `hash`/`encode` now take an `X: hash2curve::ExpandMsg<U16>` from `hash2curve` `0.14`, for example `hash2curve::ExpandMsgXmd<sha2::Sha256>` with `sha2` `0.11`.
+- `Scalar` conversions to and from `U256`/`U384`/`U512` now use `crypto-bigint` `0.7` types. `From<Scalar> for U384`/`U512` now produce the correct value, and `From<U384>`/`From<[u8; 48]>` reduce modulo the group order instead of truncating.
+
+[RUSTSEC-2026-0387]: https://rustsec.org/advisories/RUSTSEC-2026-0387
+
 ## [0.9.0] - 2026-07-31
 
 - Updated core cryptography trait dependencies to their latest compatible patch releases.

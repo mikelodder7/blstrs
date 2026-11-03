@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.10.0] - 2026-11-02
 
+### Added
+
+- `G1Affine::sum_of_products` and `G2Affine::sum_of_products` (with `alloc`), ported from [#2] by @andrewwhitehead.
+
 ### Security
 
 - Removed `crypto-bigint` `0.5` ([RUSTSEC-2026-0387]) by dropping the `elliptic-curve` `0.13` dependency, and updated `crypto-bigint` `0.7` to `0.7.10`.
@@ -26,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `ctutils` to `0.4.7` ([RUSTSEC-2026-0385]) and `crossbeam-epoch` to `0.9.21` ([RUSTSEC-2026-0204]) in `Cargo.lock`.
 - G1 and G2 now share one isogeny evaluation helper. Output is unchanged and checked against the RFC 9380 test vectors.
 
+[#2]: https://github.com/mikelodder7/blstrs/pull/2
 [RUSTSEC-2026-0385]: https://rustsec.org/advisories/RUSTSEC-2026-0385
 [RUSTSEC-2026-0204]: https://rustsec.org/advisories/RUSTSEC-2026-0204
 [RUSTSEC-2026-0387]: https://rustsec.org/advisories/RUSTSEC-2026-0387

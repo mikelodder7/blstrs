@@ -237,6 +237,8 @@ const B: Fp2 = Fp2 {
 const B3: Fp2 = Fp2::add(&Fp2::add(&B, &B), &B);
 
 impl G2Affine {
+    impl_affine_sum_of_products!(G2Projective);
+
     /// Bytes to represent this point compressed
     pub const COMPRESSED_BYTES: usize = 96;
     /// Bytes to represent this point uncompressed
@@ -2674,4 +2676,33 @@ fn test_hex() {
     let g2 = G2Affine::from_uncompressed_hex(&hex).map(G2Projective::from);
     assert_eq!(g2.is_some().unwrap_u8(), 1u8);
     assert_eq!(g1, g2.unwrap());
+}
+
+#[cfg(feature = "alloc")]
+#[test]
+fn test_affine_sum_of_products() {
+    use ff_013::Field;
+    use rand_core::SeedableRng;
+    use rand_xorshift::XorShiftRng;
+
+    let mut rng = XorShiftRng::from_seed([
+        0x59, 0x62, 0xbe, 0x5d, 0x76, 0x3d, 0x31, 0x8d, 0x17, 0xdb, 0x37, 0x32, 0x54, 0x06, 0xbc,
+        0xe5,
+    ]);
+
+    // Cover both the Straus path and the Pippenger path (128+ terms).
+    for size in [10, 130] {
+        let points: alloc::vec::Vec<G2Affine> = (0..size)
+            .map(|_| G2Projective::random(&mut rng).to_affine())
+            .collect();
+        let scalars: alloc::vec::Vec<Scalar> =
+            (0..size).map(|_| Scalar::random(&mut rng)).collect();
+
+        let naive = points
+            .iter()
+            .zip(&scalars)
+            .fold(G2Projective::IDENTITY, |acc, (p, s)| acc + p * s);
+
+        assert_eq!(naive, G2Affine::sum_of_products(&points, &scalars));
+    }
 }
